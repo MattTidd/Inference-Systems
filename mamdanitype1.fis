@@ -1,0 +1,53 @@
+[System]
+Name='mamdanitype1'
+Type='mamdani'
+Version=2.0
+NumInputs=4
+NumOutputs=1
+NumRules=0
+AndMethod='min'
+OrMethod='max'
+ImpMethod='min'
+AggMethod='max'
+DefuzzMethod='centroid'
+
+[Input1]
+Name='Load History'
+Range=[0 10]
+NumMFs=3
+MF1='Low':'trimf',[0 0 5]
+MF2='Medium':'trimf',[2 5 8]
+MF3='High':'trimf',[4 10 10]
+
+[Input2]
+Name='Sensory Capabilities'
+Range=[1 2]
+NumMFs=2
+MF1='Imagery':'customMF1',[1]
+MF2='Measurement':'customMF1',[2]
+
+[Input3]
+Name='Task Requirements'
+Range=[1 2]
+NumMFs=2
+MF1='Imagery':'customMF1',[1]
+MF2='Measurement':'customMF1',[2]
+
+[Input4]
+Name='Weighted Travel Distance'
+Range=[0 50]
+NumMFs=3
+MF1='Low':'trapmf',[0 0 10 25]
+MF2='Medium':'trapmf',[10 15 30 35]
+MF3='High':'trapmf',[20 35 50 50]
+
+[Output1]
+Name='Suitability Score'
+Range=[0 10]
+NumMFs=4
+MF1='Low':'trimf',[0 0 4.16667]
+MF2='Medium':'trimf',[0.833333333333333 5 9.16666666666667]
+MF3='High':'trimf',[5.83333 10 10]
+MF4='Inadequate':'customMF1',[0]
+
+[Rules]
