@@ -18,7 +18,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 ###################### Function Definition ######################
 
-def fis(load, travel, capability, mode):
+def fis_create():
 
     ################ FIS Step 1: Define Fuzzy Sets ##################
 
@@ -30,9 +30,9 @@ def fis(load, travel, capability, mode):
     """
     # universes of discourse:
 
-    lh_range = np.arange(0,11,1)    # crisp values from 0 to 10
-    wtd_range = np.arange(0,51,1)   # crisp values from 0 to 50
-    cap_range = np.arange(0,3,1)    # crisp values from 0 to 2
+    lh_range = [0, (5/6), 4, 5, 6, (55/6), 10]          # crisp values of importance from 0 to 10
+    wtd_range = [0, (25/6), 20, 25, 30, (271/6), 50]    # crisp values of importance from 0 to 50
+    cap_range = [0, 1, 2]                               # crisp values of importance from 0 to 2
 
     # define linguistic input variables:
 
@@ -44,11 +44,11 @@ def fis(load, travel, capability, mode):
     #   - we have 3 linguistic terms for each variable
 
     lh['Low'] = fuzz.trimf(lh.universe, [0, 0, 6])
-    lh['Medium'] = fuzz.trimf(lh.universe, [1, 5, 9])
+    lh['Medium'] = fuzz.trimf(lh.universe, [5/6, 5, 55/6])
     lh['High'] = fuzz.trimf(lh.universe, [4, 10, 10])
 
     wtd['Low'] = fuzz.trimf(wtd.universe, [0, 0, 30])
-    wtd['Medium'] = fuzz.trimf(wtd.universe, [4, 25, 46])
+    wtd['Medium'] = fuzz.trimf(wtd.universe, [25/6, 25, 271/6])
     wtd['High'] = fuzz.trimf(wtd.universe, [20, 50, 50])
 
     cap['No Matches'] = fuzz.trimf(cap.universe, [0, 0, 0])
@@ -64,7 +64,7 @@ def fis(load, travel, capability, mode):
 
     # universe of discourse:
 
-    suit_range = np.arange(0,11,1)
+    suit_range = [0, (5/12), (25/12), 2.5, (35/12), (55/12), 5, (65/12), (85/12), 7.5, (95/12), (115/12), 10]
 
     # define linguistic output variable:
 
@@ -72,11 +72,11 @@ def fis(load, travel, capability, mode):
 
     # membership functions for linguistic values:
 
-    suit['Very Low'] = fuzz.trimf(suit_range, [0, 0, 2])
-    suit['Low'] = fuzz.trimf(suit_range, [(5/12), 2.5, 4 + (7/12)])
-    suit['Medium'] = fuzz.trimf(suit_range, [3, 5, 7])
-    suit['High'] = fuzz.trimf(suit_range, [5 + (5/12), 7.5, 9 + (7/12)])
-    suit['Very High'] = fuzz.trimf(suit_range, [8, 10, 10])
+    suit['Very Low'] = fuzz.trimf(suit.universe, [0, 0, 25/12])
+    suit['Low'] = fuzz.trimf(suit.universe, [5/12, 2.5, 55/12])
+    suit['Medium'] = fuzz.trimf(suit.universe, [35/12, 5, 85/12])
+    suit['High'] = fuzz.trimf(suit.universe, [65/12, 7.5, 115/12])
+    suit['Very High'] = fuzz.trimf(suit.universe, [95/12, 10, 10])
 
     ################ FIS Step 2: Define Rule-Base ###################
 
@@ -129,7 +129,9 @@ def fis(load, travel, capability, mode):
     rulebase.append(ctrl.Rule(lh['High'] & cap['Two Matches'], suit['Very Low']))
     rulebase.append(ctrl.Rule(wtd['High'] & cap['Two Matches'], suit['Very Low']))
 
-    ############# FIS Step 3: Control System Creation ###############
+    return rulebase
+
+def fis_solve(rulebase, load, travel, capability):
 
     """
     We first create the control system, and we can run simulations on this control system
@@ -137,63 +139,67 @@ def fis(load, travel, capability, mode):
 
     """
 
-    # create the control system:
+    # create control system:
 
     fis_ctrl = ctrl.ControlSystem(rulebase)
 
     # create an instance of the control system for simulation:
 
-    fis_sim = ctrl.ControlSystemSimulation(fis_ctrl, flush_after_run = 50 * 50 + 1)
+    sim = ctrl.ControlSystemSimulation(fis_ctrl)
 
-    # if the user just wants to use the fis:
+    # solve:
 
-    if mode == 'Compute':
+    sim.input['Load History'] = load
+    sim.input['Weighted Travel Distance'] = travel
+    sim.input['Capabilities'] = capability
 
-        fis_sim.input['Load History'] = load
-        fis_sim.input['Weighted Travel Distance'] = travel
-        fis_sim.input['Capabilities'] = capability
-
-        fis_sim.compute()
-
-        # obtain output:
-
-        result = fis_sim.output['Suitability']
-        print(f'The crisp suitability output is {round(result,2)}')
-
-    elif mode == 'Control Surface':
-
-        # range of load history:
-        xlh = np.linspace(0,10,50)
-        # range of weighted travel distance:
-        ywtd = np.linspace(0,50,50)
-    
-        x,y = np.meshgrid(xlh,ywtd)
-        z = np.zeros_like(x)
-
-        for i in range(50):
-            for j in range(50):
-                fis_sim.input['Load History'] = x[i,j]
-                fis_sim.input['Weighted Travel Distance'] = y[i,j]
-                fis_sim.input['Capabilities'] = capability
-                fis_sim.compute()
-                z[i,j] = fis_sim.output['Suitability']
-        
-        fig = plt.figure(figsize=(8, 8))
-        ax = fig.add_subplot(111, projection='3d')
-
-        surf = ax.plot_surface(x, y, z, rstride=1, cstride=1, cmap='viridis',
-                            linewidth=0.4, antialiased=True)
-
-        ax.view_init(30, 200)
-        plt.show()
-    else:
-        print('Please select one of the two modes')
+    result = sim.output['Suitability']
+    return result
 
 ######################        Main         ######################
 
 load = 2
 travel = 14
 capability = 1
-mode = "Control Surface"
 
-fis(load ,travel, capability, mode)
+rulebase = fis_create()
+result = fis_solve(rulebase, load ,travel, capability)
+print(f"Suitability is: {round(result,2)}")
+
+# #############  Control Surface Creation ###############
+
+# """
+# We first create the control system, and we can run simulations on this control system
+# by further passing inputs into it, and then getting it to compute the output.
+
+# """
+
+# mode = "Control Surface"
+#     elif mode == 'Control Surface':
+
+#         # range of load history:
+#         xlh = np.linspace(0,10,50)
+#         # range of weighted travel distance:
+#         ywtd = np.linspace(0,50,50)
+    
+#         x,y = np.meshgrid(xlh,ywtd)
+#         z = np.zeros_like(x)
+
+#         for i in range(50):
+#             for j in range(50):
+#                 fis_sim.input['Load History'] = x[i,j]
+#                 fis_sim.input['Weighted Travel Distance'] = y[i,j]
+#                 fis_sim.input['Capabilities'] = capability
+#                 fis_sim.compute()
+#                 z[i,j] = fis_sim.output['Suitability']
+        
+#         fig = plt.figure(figsize=(8, 8))
+#         ax = fig.add_subplot(111, projection='3d')
+
+#         surf = ax.plot_surface(x, y, z, rstride=1, cstride=1, cmap='viridis',
+#                             linewidth=0.4, antialiased=True)
+
+#         ax.view_init(30, 200)
+#         plt.show()
+#     else:
+#         print('Please select one of the two modes')
