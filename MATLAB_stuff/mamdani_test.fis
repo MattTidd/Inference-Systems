@@ -31,9 +31,9 @@ MF3='High':'trimf',[20 50 50]
 Name='Capabilities'
 Range=[0 2]
 NumMFs=3
-MF1='No Match':'customMF1',[0]
-MF2='One Match':'customMF1',[1]
-MF3='Both Match':'customMF1',[2]
+MF1='No Match':'trimf',[0 0 0]
+MF2='One Match':'trimf',[1 1 1]
+MF3='Both Match':'trimf',[2 2 2]
 
 [Output1]
 Name='Suitability'
