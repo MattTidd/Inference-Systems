@@ -126,4 +126,29 @@ rule23 = rulebase.append(ctrl.Rule(wtd['High'] & cap['Two Matches'], suit['Very 
 
 ############# FIS Step 3: Control System Creation ###############
 
+"""
+We first create the control system, and we can run simulations on this control system
+by further passing inputs into it, and then getting it to compute the output.
+
+"""
+
+# create the control system:
+
 fis_ctrl = ctrl.ControlSystem(rulebase)
+
+# create an instance of the control system for simulation:
+
+fis_sim = ctrl.ControlSystemSimulation(fis_ctrl)
+
+# simulate:
+
+fis_sim.input['Load History'] = 2
+fis_sim.input['Weighted Travel Distance'] = 14
+fis_sim.input['Capabilities'] = 1
+
+fis_sim.compute()
+
+# obtain output:
+
+result = fis_sim.output['Suitability']
+print(f'The crisp suitability output is {round(result,2)}')
