@@ -13,16 +13,16 @@ import numpy as np
 import skfuzzy as fuzz
 from skfuzzy import control as ctrl
 import matplotlib.pyplot as plt
+import time
 
 ################ FIS Step 1: Define Fuzzy Sets ##################
 
 """
 Must firstly define the input linguistic variables. This involves:
     - Defining the linguistic variable itself
-    - Defining the crisp universe of discourse for this variable
+    - Defining the crisp universe of discourse for these variables
     - Defining the linguistic values and their membership functions
 """
-
 # universes of discourse:
 
 lh_range = np.arange(0,11,1)    # crisp values from 0 to 10
@@ -54,7 +54,7 @@ cap['Two Matches'] = fuzz.trimf(cap.universe, [2, 2, 2])
 Now we can define the output linguistic variable. This involves:
     - Defining the linguistic variable itself
     - Defining the crisp universe of discourse for this variable
-    - Defining the linguistic values and their membership functions
+    - Defining the linguistic value and its membership function
 """
 
 # universe of discourse:
@@ -82,14 +82,48 @@ rule-base can contain a maximum of 27 rules for a full
 description
 
 The following rules were selected based on their provided
-surface of control, which was sculpted using these rules:
+surface of control, which was sculpted iteratively through
+the rules.
 
 """
+rulebase = []
 
 # define rules for the mismatched case:
 
-rule1 = ctrl.Rule(cap['No Matches'], suit['Very Low'])
+rule1 = rulebase.append(ctrl.Rule(cap['No Matches'], suit['Very Low']))
 
 # define rules for the one-match case:
 
-rule2 = ctrl.Rule()
+rule2 = rulebase.append(ctrl.Rule(lh['Low'] & wtd['Low'] & cap['One Match'], suit['High']))
+rule3 = rulebase.append(ctrl.Rule(lh['Medium'] & wtd['Low'] & cap['One Match'], suit['Medium']))
+rule4 = rulebase.append(ctrl.Rule(lh['High'] & wtd['Low'] & cap['One Match'], suit['Medium']))
+rule5 = rulebase.append(ctrl.Rule(lh['Low'] & wtd['Medium'] & cap['One Match'], suit['Medium']))
+rule6 = rulebase.append(ctrl.Rule(lh['Medium'] & wtd['Medium'] & cap['One Match'], suit['Low']))
+rule7 = rulebase.append(ctrl.Rule(lh['High'] & wtd['Medium'] & cap['One Match'], suit['Low']))
+rule8 = rulebase.append(ctrl.Rule(lh['Low'] & wtd['High'] & cap['One Match'], suit['Medium']))
+rule9 = rulebase.append(ctrl.Rule(lh['Medium'] & wtd['High'] & cap['One Match'], suit['Low']))
+rule10 = rulebase.append(ctrl.Rule(lh['High'] & wtd['High'] & cap['One Match'], suit['Very Low']))
+
+# define rules for the two-match case:
+
+rule11 = rulebase.append(ctrl.Rule(lh['Low'] & wtd['Low'] & cap['Two Matches'], suit['Very High']))
+rule12 = rulebase.append(ctrl.Rule(lh['Medium'] & wtd['Low'] & cap['Two Matches'], suit['High']))
+rule13 = rulebase.append(ctrl.Rule(lh['High'] & wtd['Low'] & cap['Two Matches'], suit['High']))
+rule14 = rulebase.append(ctrl.Rule(lh['Low'] & wtd['Medium'] & cap['Two Matches'], suit['High']))
+rule15 = rulebase.append(ctrl.Rule(lh['Medium'] & wtd['Medium'] & cap['Two Matches'], suit['Medium']))
+rule16 = rulebase.append(ctrl.Rule(lh['High'] & wtd['Medium'] & cap['Two Matches'], suit['Medium']))
+rule17 = rulebase.append(ctrl.Rule(lh['Low'] & wtd['High'] & cap['Two Matches'], suit['High']))
+rule18 = rulebase.append(ctrl.Rule(lh['Medium'] & wtd['High'] & cap['Two Matches'], suit['Medium']))
+rule19 = rulebase.append(ctrl.Rule(lh['High'] & wtd['High'] & cap['Two Matches'], suit['Very Low']))
+
+# define sculpting rules:
+
+rule20 = rulebase.append(ctrl.Rule(lh['High'] & cap['One Match'], suit['Very Low']))
+rule21 = rulebase.append(ctrl.Rule(wtd['High'] & cap['One Match'], suit['Very Low']))
+
+rule22 = rulebase.append(ctrl.Rule(lh['High'] & cap['Two Matches'], suit['Very Low']))
+rule23 = rulebase.append(ctrl.Rule(wtd['High'] & cap['Two Matches'], suit['Very Low']))
+
+############# FIS Step 3: Control System Creation ###############
+
+fis_ctrl = ctrl.ControlSystem(rulebase)
