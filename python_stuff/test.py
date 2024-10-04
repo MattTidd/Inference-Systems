@@ -12,7 +12,6 @@ become a ROS2 package.
 import numpy as np
 import skfuzzy as fuzz
 from skfuzzy import control as ctrl
-from skfuzzy import membership as mem
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
@@ -153,6 +152,8 @@ def fis_solve(rulebase, load, travel, capability):
     sim.input['Weighted Travel Distance'] = travel
     sim.input['Capabilities'] = capability
 
+    sim.compute()
+
     result = sim.output['Suitability']
     return result
 
@@ -165,41 +166,3 @@ capability = 1
 rulebase = fis_create()
 result = fis_solve(rulebase, load ,travel, capability)
 print(f"Suitability is: {round(result,2)}")
-
-# #############  Control Surface Creation ###############
-
-# """
-# We first create the control system, and we can run simulations on this control system
-# by further passing inputs into it, and then getting it to compute the output.
-
-# """
-
-# mode = "Control Surface"
-#     elif mode == 'Control Surface':
-
-#         # range of load history:
-#         xlh = np.linspace(0,10,50)
-#         # range of weighted travel distance:
-#         ywtd = np.linspace(0,50,50)
-    
-#         x,y = np.meshgrid(xlh,ywtd)
-#         z = np.zeros_like(x)
-
-#         for i in range(50):
-#             for j in range(50):
-#                 fis_sim.input['Load History'] = x[i,j]
-#                 fis_sim.input['Weighted Travel Distance'] = y[i,j]
-#                 fis_sim.input['Capabilities'] = capability
-#                 fis_sim.compute()
-#                 z[i,j] = fis_sim.output['Suitability']
-        
-#         fig = plt.figure(figsize=(8, 8))
-#         ax = fig.add_subplot(111, projection='3d')
-
-#         surf = ax.plot_surface(x, y, z, rstride=1, cstride=1, cmap='viridis',
-#                             linewidth=0.4, antialiased=True)
-
-#         ax.view_init(30, 200)
-#         plt.show()
-#     else:
-#         print('Please select one of the two modes')
