@@ -12,143 +12,188 @@ become a ROS2 package.
 import numpy as np
 import skfuzzy as fuzz
 from skfuzzy import control as ctrl
+from skfuzzy import membership as mem
 import matplotlib.pyplot as plt
-import time
+from mpl_toolkits.mplot3d import Axes3D
 
-################ FIS Step 1: Define Fuzzy Sets ##################
+###################### Function Definition ######################
 
-"""
-Must firstly define the input linguistic variables. This involves:
-    - Defining the linguistic variable itself
-    - Defining the crisp universe of discourse for these variables
-    - Defining the linguistic values and their membership functions
-"""
-# universes of discourse:
+def fis(load, travel, capability, mode):
 
-lh_range = np.arange(0,11,1)    # crisp values from 0 to 10
-wtd_range = np.arange(0,51,1)   # crisp values from 0 to 50
-cap_range = np.arange(0,3,1)    # crisp values from 0 to 2
+    ################ FIS Step 1: Define Fuzzy Sets ##################
 
-# define linguistic input variables:
+    """
+    Must firstly define the input linguistic variables. This involves:
+        - Defining the linguistic variable itself
+        - Defining the crisp universe of discourse for these variables
+        - Defining the linguistic values and their membership functions
+    """
+    # universes of discourse:
 
-lh = ctrl.Antecedent(lh_range, 'Load History')
-wtd = ctrl.Antecedent(wtd_range, 'Weighted Travel Distance')
-cap = ctrl.Antecedent(cap_range, 'Capabilities')
+    lh_range = np.arange(0,11,1)    # crisp values from 0 to 10
+    wtd_range = np.arange(0,51,1)   # crisp values from 0 to 50
+    cap_range = np.arange(0,3,1)    # crisp values from 0 to 2
 
-# define membership functions for the input variables:
-#   - we have 3 linguistic terms for each variable
+    # define linguistic input variables:
 
-lh['Low'] = fuzz.trimf(lh.universe, [0, 0, 6])
-lh['Medium'] = fuzz.trimf(lh.universe, [1, 5, 9])
-lh['High'] = fuzz.trimf(lh.universe, [4, 10, 10])
+    lh = ctrl.Antecedent(lh_range, 'Load History')
+    wtd = ctrl.Antecedent(wtd_range, 'Weighted Travel Distance')
+    cap = ctrl.Antecedent(cap_range, 'Capabilities')
 
-wtd['Low'] = fuzz.trimf(wtd.universe, [0, 0, 30])
-wtd['Medium'] = fuzz.trimf(wtd.universe, [4, 25, 46])
-wtd['High'] = fuzz.trimf(wtd.universe, [20, 50, 50])
+    # define membership functions for the input variables:
+    #   - we have 3 linguistic terms for each variable
 
-cap['No Matches'] = fuzz.trimf(cap.universe, [0, 0, 0])
-cap['One Match'] = fuzz.trimf(cap.universe, [1, 1, 1])
-cap['Two Matches'] = fuzz.trimf(cap.universe, [2, 2, 2])
+    lh['Low'] = fuzz.trimf(lh.universe, [0, 0, 6])
+    lh['Medium'] = fuzz.trimf(lh.universe, [1, 5, 9])
+    lh['High'] = fuzz.trimf(lh.universe, [4, 10, 10])
 
-"""
-Now we can define the output linguistic variable. This involves:
-    - Defining the linguistic variable itself
-    - Defining the crisp universe of discourse for this variable
-    - Defining the linguistic value and its membership function
-"""
+    wtd['Low'] = fuzz.trimf(wtd.universe, [0, 0, 30])
+    wtd['Medium'] = fuzz.trimf(wtd.universe, [4, 25, 46])
+    wtd['High'] = fuzz.trimf(wtd.universe, [20, 50, 50])
 
-# universe of discourse:
+    cap['No Matches'] = fuzz.trimf(cap.universe, [0, 0, 0])
+    cap['One Match'] = fuzz.trimf(cap.universe, [1, 1, 1])
+    cap['Two Matches'] = fuzz.trimf(cap.universe, [2, 2, 2])
 
-suit_range = np.arange(0,11,1)
+    """
+    Now we can define the output linguistic variable. This involves:
+        - Defining the linguistic variable itself
+        - Defining the crisp universe of discourse for this variable
+        - Defining the linguistic value and its membership function
+    """
 
-# define linguistic output variable:
+    # universe of discourse:
 
-suit = ctrl.Consequent(suit_range, 'Suitability')
+    suit_range = np.arange(0,11,1)
 
-# membership functions for linguistic values:
+    # define linguistic output variable:
 
-suit['Very Low'] = fuzz.trimf(suit_range, [0, 0, 2 + (1/12)])
-suit['Low'] = fuzz.trimf(suit_range, [(5/12), 2.5, 4 + (7/12)])
-suit['Medium'] = fuzz.trimf(suit_range, [2 + (11/12), 5, 7 + (1/12)])
-suit['High'] = fuzz.trimf(suit_range, [5 + (5/12), 7.5, 9 + (7/12)])
-suit['Very High'] = fuzz.trimf(suit_range, [7 + (11/12), 10, 10])
+    suit = ctrl.Consequent(suit_range, 'Suitability')
 
-################ FIS Step 2: Define Rule-Base ###################
+    # membership functions for linguistic values:
 
-"""
-Now we can define the fuzzy rule base. For a system with 3
-linguistic inputs, each with 3 linguistic variables, the 
-rule-base can contain a maximum of 27 rules for a full
-description
+    suit['Very Low'] = fuzz.trimf(suit_range, [0, 0, 2])
+    suit['Low'] = fuzz.trimf(suit_range, [(5/12), 2.5, 4 + (7/12)])
+    suit['Medium'] = fuzz.trimf(suit_range, [3, 5, 7])
+    suit['High'] = fuzz.trimf(suit_range, [5 + (5/12), 7.5, 9 + (7/12)])
+    suit['Very High'] = fuzz.trimf(suit_range, [8, 10, 10])
 
-The following rules were selected based on their provided
-surface of control, which was sculpted iteratively through
-the rules.
+    ################ FIS Step 2: Define Rule-Base ###################
 
-"""
-rulebase = []
+    """
+    Now we can define the fuzzy rule base. For a system with 3
+    linguistic inputs, each with 3 linguistic variables, the 
+    rule-base can contain a maximum of 27 rules for a full
+    description
 
-# define rules for the mismatched case:
+    The following rules were selected based on their provided
+    surface of control, which was sculpted iteratively through
+    the rules.
 
-rule1 = rulebase.append(ctrl.Rule(cap['No Matches'], suit['Very Low']))
+    """
+    rulebase = []
 
-# define rules for the one-match case:
+    # define rules for the mismatched case:
 
-rule2 = rulebase.append(ctrl.Rule(lh['Low'] & wtd['Low'] & cap['One Match'], suit['High']))
-rule3 = rulebase.append(ctrl.Rule(lh['Medium'] & wtd['Low'] & cap['One Match'], suit['Medium']))
-rule4 = rulebase.append(ctrl.Rule(lh['High'] & wtd['Low'] & cap['One Match'], suit['Medium']))
-rule5 = rulebase.append(ctrl.Rule(lh['Low'] & wtd['Medium'] & cap['One Match'], suit['Medium']))
-rule6 = rulebase.append(ctrl.Rule(lh['Medium'] & wtd['Medium'] & cap['One Match'], suit['Low']))
-rule7 = rulebase.append(ctrl.Rule(lh['High'] & wtd['Medium'] & cap['One Match'], suit['Low']))
-rule8 = rulebase.append(ctrl.Rule(lh['Low'] & wtd['High'] & cap['One Match'], suit['Medium']))
-rule9 = rulebase.append(ctrl.Rule(lh['Medium'] & wtd['High'] & cap['One Match'], suit['Low']))
-rule10 = rulebase.append(ctrl.Rule(lh['High'] & wtd['High'] & cap['One Match'], suit['Very Low']))
+    rulebase.append(ctrl.Rule(cap['No Matches'], suit['Very Low']))
 
-# define rules for the two-match case:
+    # define rules for the one-match case:
 
-rule11 = rulebase.append(ctrl.Rule(lh['Low'] & wtd['Low'] & cap['Two Matches'], suit['Very High']))
-rule12 = rulebase.append(ctrl.Rule(lh['Medium'] & wtd['Low'] & cap['Two Matches'], suit['High']))
-rule13 = rulebase.append(ctrl.Rule(lh['High'] & wtd['Low'] & cap['Two Matches'], suit['High']))
-rule14 = rulebase.append(ctrl.Rule(lh['Low'] & wtd['Medium'] & cap['Two Matches'], suit['High']))
-rule15 = rulebase.append(ctrl.Rule(lh['Medium'] & wtd['Medium'] & cap['Two Matches'], suit['Medium']))
-rule16 = rulebase.append(ctrl.Rule(lh['High'] & wtd['Medium'] & cap['Two Matches'], suit['Medium']))
-rule17 = rulebase.append(ctrl.Rule(lh['Low'] & wtd['High'] & cap['Two Matches'], suit['High']))
-rule18 = rulebase.append(ctrl.Rule(lh['Medium'] & wtd['High'] & cap['Two Matches'], suit['Medium']))
-rule19 = rulebase.append(ctrl.Rule(lh['High'] & wtd['High'] & cap['Two Matches'], suit['Very Low']))
+    rulebase.append(ctrl.Rule(lh['Low'] & wtd['Low'] & cap['One Match'], suit['High']))
+    rulebase.append(ctrl.Rule(lh['Medium'] & wtd['Low'] & cap['One Match'], suit['Medium']))
+    rulebase.append(ctrl.Rule(lh['High'] & wtd['Low'] & cap['One Match'], suit['Medium']))
+    rulebase.append(ctrl.Rule(lh['Low'] & wtd['Medium'] & cap['One Match'], suit['Medium']))
+    rulebase.append(ctrl.Rule(lh['Medium'] & wtd['Medium'] & cap['One Match'], suit['Low']))
+    rulebase.append(ctrl.Rule(lh['High'] & wtd['Medium'] & cap['One Match'], suit['Low']))
+    rulebase.append(ctrl.Rule(lh['Low'] & wtd['High'] & cap['One Match'], suit['Medium']))
+    rulebase.append(ctrl.Rule(lh['Medium'] & wtd['High'] & cap['One Match'], suit['Low']))
+    rulebase.append(ctrl.Rule(lh['High'] & wtd['High'] & cap['One Match'], suit['Very Low']))
 
-# define sculpting rules:
+    # define rules for the two-match case:
 
-rule20 = rulebase.append(ctrl.Rule(lh['High'] & cap['One Match'], suit['Very Low']))
-rule21 = rulebase.append(ctrl.Rule(wtd['High'] & cap['One Match'], suit['Very Low']))
+    rulebase.append(ctrl.Rule(lh['Low'] & wtd['Low'] & cap['Two Matches'], suit['Very High']))
+    rulebase.append(ctrl.Rule(lh['Medium'] & wtd['Low'] & cap['Two Matches'], suit['High']))
+    rulebase.append(ctrl.Rule(lh['High'] & wtd['Low'] & cap['Two Matches'], suit['High']))
+    rulebase.append(ctrl.Rule(lh['Low'] & wtd['Medium'] & cap['Two Matches'], suit['High']))
+    rulebase.append(ctrl.Rule(lh['Medium'] & wtd['Medium'] & cap['Two Matches'], suit['Medium']))
+    rulebase.append(ctrl.Rule(lh['High'] & wtd['Medium'] & cap['Two Matches'], suit['Medium']))
+    rulebase.append(ctrl.Rule(lh['Low'] & wtd['High'] & cap['Two Matches'], suit['High']))
+    rulebase.append(ctrl.Rule(lh['Medium'] & wtd['High'] & cap['Two Matches'], suit['Medium']))
+    rulebase.append(ctrl.Rule(lh['High'] & wtd['High'] & cap['Two Matches'], suit['Very Low']))
 
-rule22 = rulebase.append(ctrl.Rule(lh['High'] & cap['Two Matches'], suit['Very Low']))
-rule23 = rulebase.append(ctrl.Rule(wtd['High'] & cap['Two Matches'], suit['Very Low']))
+    # define sculpting rules:
 
-############# FIS Step 3: Control System Creation ###############
+    rulebase.append(ctrl.Rule(lh['High'] & cap['One Match'], suit['Very Low']))
+    rulebase.append(ctrl.Rule(wtd['High'] & cap['One Match'], suit['Very Low']))
 
-"""
-We first create the control system, and we can run simulations on this control system
-by further passing inputs into it, and then getting it to compute the output.
+    rulebase.append(ctrl.Rule(lh['High'] & cap['Two Matches'], suit['Very Low']))
+    rulebase.append(ctrl.Rule(wtd['High'] & cap['Two Matches'], suit['Very Low']))
 
-"""
+    ############# FIS Step 3: Control System Creation ###############
 
-# create the control system:
+    """
+    We first create the control system, and we can run simulations on this control system
+    by further passing inputs into it, and then getting it to compute the output.
 
-fis_ctrl = ctrl.ControlSystem(rulebase)
+    """
 
-# create an instance of the control system for simulation:
+    # create the control system:
 
-fis_sim = ctrl.ControlSystemSimulation(fis_ctrl)
+    fis_ctrl = ctrl.ControlSystem(rulebase)
 
-# simulate:
+    # create an instance of the control system for simulation:
 
-fis_sim.input['Load History'] = 2
-fis_sim.input['Weighted Travel Distance'] = 14
-fis_sim.input['Capabilities'] = 1
+    fis_sim = ctrl.ControlSystemSimulation(fis_ctrl, flush_after_run = 50 * 50 + 1)
 
-fis_sim.compute()
+    # if the user just wants to use the fis:
 
-# obtain output:
+    if mode == 'Compute':
 
-result = fis_sim.output['Suitability']
-print(f'The crisp suitability output is {round(result,2)}')
+        fis_sim.input['Load History'] = load
+        fis_sim.input['Weighted Travel Distance'] = travel
+        fis_sim.input['Capabilities'] = capability
+
+        fis_sim.compute()
+
+        # obtain output:
+
+        result = fis_sim.output['Suitability']
+        print(f'The crisp suitability output is {round(result,2)}')
+
+    elif mode == 'Control Surface':
+
+        # range of load history:
+        xlh = np.linspace(0,10,50)
+        # range of weighted travel distance:
+        ywtd = np.linspace(0,50,50)
+    
+        x,y = np.meshgrid(xlh,ywtd)
+        z = np.zeros_like(x)
+
+        for i in range(50):
+            for j in range(50):
+                fis_sim.input['Load History'] = x[i,j]
+                fis_sim.input['Weighted Travel Distance'] = y[i,j]
+                fis_sim.input['Capabilities'] = capability
+                fis_sim.compute()
+                z[i,j] = fis_sim.output['Suitability']
+        
+        fig = plt.figure(figsize=(8, 8))
+        ax = fig.add_subplot(111, projection='3d')
+
+        surf = ax.plot_surface(x, y, z, rstride=1, cstride=1, cmap='viridis',
+                            linewidth=0.4, antialiased=True)
+
+        ax.view_init(30, 200)
+        plt.show()
+    else:
+        print('Please select one of the two modes')
+
+######################        Main         ######################
+
+load = 2
+travel = 14
+capability = 1
+mode = "Control Surface"
+
+fis(load ,travel, capability, mode)
