@@ -14,6 +14,7 @@ import skfuzzy as fuzz
 from skfuzzy import control as ctrl
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import time
 
 ###################### Function Definition ######################
 
@@ -163,6 +164,8 @@ load = 2
 travel = 14
 capability = 1
 
+start = time.time()
 rulebase = fis_create()
 result = fis_solve(rulebase, load ,travel, capability)
-print(f"Suitability is: {round(result,2)}")
+elapsed = (time.time()-start)
+print(f"Suitability is: {round(result,2)}, Computation Time was: {round(elapsed,4)} sec")
