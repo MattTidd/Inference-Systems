@@ -180,21 +180,28 @@ buffer = 5
 image = read_map(map_str, resolution)
 buffered_image, spawn_locations = add_buffer(image, buffer)
 
-start = np.array((410,317))
-end = np.array((619,75))
+# for robot simulation:
+#   - spawn x many robots within set positions, 
+#   - randomly spawn a task site
+#   - use the fuzzy inference system to determine who is most suitable
+#   - allocate the task to the most suitable robot
+#   - update robot params and repeat
 
-shortest_path, distance = dijkstra(buffered_image, start, end)
+# start = np.array((410,317))
+# end = np.array((619,75))
 
-if shortest_path is not None:
-    image_rgb = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+# shortest_path, distance = dijkstra(buffered_image, start, end)
 
-    for x,y in shortest_path:
-        image_rgb[y,x] = [255, 0, 0]
+# if shortest_path is not None:
+#     image_rgb = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+
+#     for x,y in shortest_path:
+#         image_rgb[y,x] = [255, 0, 0]
         
-    print(f'Path length is {round((distance*resolution),2)} m')
-    plt.imshow(image_rgb)
-    plt.show()
-else:
-    print("Goal is unreachable.")
-    plt.imshow(image, cmap = "gray")
-    plt.show()
+#     print(f'Path length is {round((distance*resolution),2)} m')
+#     plt.imshow(image_rgb)
+#     plt.show()
+# else:
+#     print("Goal is unreachable.")
+#     plt.imshow(image, cmap = "gray")
+#     plt.show()
