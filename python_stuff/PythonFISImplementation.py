@@ -148,21 +148,40 @@ def add_buffer(image, buffer_size):
     # Create a new image where dilated areas are treated as non-navigable (set to black)
     buffered_image = image.copy()
     buffered_image[dilated_mask == 1] = 0  # Set dilated areas to black (0)
+
+     # white space detection:
+    spawn_locations = np.flip(np.column_stack(np.where(np.flipud(buffered_image) >= 254)),axis = 1)
     
-    return buffered_image
+    return buffered_image, spawn_locations
+
+def generate_image(width, height):
+    # generate a blank png for use in mapping:
+    blank_image = np.ones((height, width, 3), dtype=np.uint8) * 205
+
+    # specify path:
+    files_in_dir = os.listdir(os.getcwd())
+    file_path = os.path.join(os.getcwd(), files_in_dir[files_in_dir.index('python_stuff')], "maps")
+
+    # write the image to variable that will return a flag for true or false
+    a = cv2.imwrite(os.path.join(file_path, 'blank_image.png'), blank_image)
+
+    # verify that the image was actually created:
+    if a == True:
+        print('Image saved successfully')
+    else:
+        print('Image saving failed')
 
 #################             Main             ###################
 
 resolution = 0.05
-map_str = "edited_map.png"
+map_str = "warehouse_map.png"
 buffer = 5
 
-start = np.array((86,206))
-# end = np.array((75, 28))
-end = np.array((293,86))
-
 image = read_map(map_str, resolution)
-buffered_image = add_buffer(image, buffer)
+buffered_image, spawn_locations = add_buffer(image, buffer)
+
+start = np.array((410,317))
+end = np.array((619,75))
 
 shortest_path, distance = dijkstra(buffered_image, start, end)
 
@@ -172,7 +191,7 @@ if shortest_path is not None:
     for x,y in shortest_path:
         image_rgb[y,x] = [255, 0, 0]
         
-    print(f'Path length is {distance}')
+    print(f'Path length is {round((distance*resolution),2)} m')
     plt.imshow(image_rgb)
     plt.show()
 else:
