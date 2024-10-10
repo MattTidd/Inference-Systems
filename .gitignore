@@ -1,2 +1,5 @@
-*.png
+blank_image.png
+*0.png
+*1.png
+*2.png
 __pycache__
