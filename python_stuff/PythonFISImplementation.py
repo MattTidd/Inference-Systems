@@ -15,6 +15,7 @@ import cv2
 import os
 import sys
 import random
+from random import shuffle
 import math as m
 import heapq
 from PythonFISFunctions import *
@@ -38,16 +39,17 @@ class Robot:
     def __init__(self, id, sensor, position):
         self.id = id
         self.sensor = sensor
-        self.load = 0
+        self.load = 0.0
         self.position = position
-        self.travel = 0
-        self.weight = 1 + random.uniform(-0.01, 0.01)
-        self.suitability = 0
+        self.travel = 0.0
+        self.weight = float(1 + random.uniform(-0.1, 0.1))
+        self.suitability = 0.0
 
     # for querying: 
 
     def display_robot_info(self):
         return (f"Robot ID: {self.id}\n"
+                f"Position: {self.position}\n"
                 f"Sensor Type: {self.sensor}\n"
                 f"Load History: {self.load}\n"
                 f"Travelled Distance: {self.travel}\n"
@@ -173,19 +175,114 @@ def generate_image(width, height):
 
 #################             Main             ###################
 
-resolution = 0.05
-map_str = "warehouse_map.png"
-buffer = 5
-
-image = read_map(map_str, resolution)
-buffered_image, spawn_locations = add_buffer(image, buffer)
-
 # for robot simulation:
 #   - spawn x many robots within set positions, 
 #   - randomly spawn a task site
 #   - use the fuzzy inference system to determine who is most suitable
 #   - allocate the task to the most suitable robot
 #   - update robot params and repeat
+
+# simulation parameters:
+resolution = 0.05               # resolution of the map, slam_toolbox default
+map_str = "warehouse_map.png"   # string value of the map name
+buffer = 5                      # distance in pixels that obstacles should be avoided
+sim = True                      # loop condition for simulation
+
+nr = 4                      # number of robots in the MRS
+x = 2                       # number of camera equipped robots within the MRS
+y = nr - x                  # number of measurement equipped robots within the MRS
+robots = {}                 # empty dictionary to hold robot objects once created
+bid = np.zeros((nr,1))      # empty array to store robot bids
+
+positions = [(410, 317), (601, 117), (152, 329), (239, 70)]
+tasks = [(540, 263),(106, 271), (65, 63), (602, 196), (401, 190),
+         (401, 190), (313, 79), (487, 229)]
+    
+# load the map and dilate the borders to get a buffered image for navigation:
+image = read_map(map_str, resolution)
+buffered_image, spawn_locations = add_buffer(image, buffer)
+
+# shuffle indices of positions and tasks:
+random.shuffle(positions)   # shuffle the positions of the robots so that each time the simulation is ran the robots are in different locations
+random.shuffle(tasks)       # shuffle the ordering of the task locations so that each time the simulation is ran the task ordering is different
+
+# spawn robots based on the user defined mission parameters:
+for num in range(1, nr+1):
+    robot_name = f"Robot {num}"
+
+    if num <= x:
+        robots[robot_name] = Robot(
+            id = num,
+            sensor = "Imagery",
+            position = positions[num-1],
+        )
+    else:
+        robots[robot_name] = Robot(
+            id = num,
+            sensor = "Measurement",
+            position = positions[num-1],
+        )
+
+# create fuzzy inference rulebase:
+rulebase = fis_create()
+
+for current_task in tasks:
+
+    # print(f"Current Task: {current_task}\n")
+
+    # query robots and determine suitability:
+
+    for id, robot in robots.items():
+        # determine the robots starting position:
+        start = robot.position
+        # print(f"{id} position is {start}")
+
+        # determine the length of the planned path:
+        _, dist = dijkstra(buffered_image, start, current_task)
+
+        # update the robots planned weighted travel distance:
+        robot.travel = round((robot.weight * dist * resolution),3)
+        # print(f"{id} updated - travel distance is: {robot.travel}")
+
+        # determine the capability matching of the robot:
+
+        check = robot.sensor
+
+        if check == "Imagery and Measurement" or check == "Measurement and Imagery":
+            capability = 2
+            # print(f"Capability is Two Matches")
+        elif check == "Imagery" or check == "Measurement":
+            capability = 1
+            # print(f"Capability is One Match")
+        else:
+            capability = 0
+            # print(f"Capability is No Match")
+
+        # need to use the fuzzy inference system to determine the suitability
+        # of a given robot for the task:
+
+        robot.suitability = fis_solve(rulebase, robot.load, robot.travel, capability)
+        # print(f"Suitability of {id} is {round((robot.suitability),2)}")
+
+    # ranking of tasks:
+    for id, robot in robots.items():
+        sensor = robot.sensor
+        suit = robot.suitability
+        np.append(bid, (sensor, suit))
+        print(bid)
+
+
+    # updating of robot parameters and tracking of metrics like distance:
+        # need to update the load history if selected, and track the overall travel distance
+
+
+
+
+
+    
+    
+
+# # while sim == True:
 
 # start = np.array((410,317))
 # end = np.array((619,75))
