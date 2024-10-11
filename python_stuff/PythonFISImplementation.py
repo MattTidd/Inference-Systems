@@ -34,6 +34,7 @@ class Robot:
     - their position within space
     - a weight, which is used to resolution the impact of their travelling
     - a suitability, which is to be calculated using the FIS
+    - an allocation tag, which is used in the allocation of tasks
     """
     
     def __init__(self, id, sensor, position):
@@ -44,6 +45,7 @@ class Robot:
         self.travel = 0.0
         self.weight = float(1 + random.uniform(-0.1, 0.1))
         self.suitability = 0.0
+        self.allocated = "False"
 
     # for querying: 
 
@@ -192,7 +194,7 @@ nr = 4                      # number of robots in the MRS
 x = 2                       # number of camera equipped robots within the MRS
 y = nr - x                  # number of measurement equipped robots within the MRS
 robots = {}                 # empty dictionary to hold robot objects once created
-bid = np.zeros((nr,1))      # empty array to store robot bids
+bid = np.zeros((nr,2), dtype = object)      # empty array to store robot bids
 
 positions = [(410, 317), (601, 117), (152, 329), (239, 70)]
 tasks = [(540, 263),(106, 271), (65, 63), (602, 196), (401, 190),
@@ -261,16 +263,20 @@ for current_task in tasks:
         # need to use the fuzzy inference system to determine the suitability
         # of a given robot for the task:
 
-        robot.suitability = fis_solve(rulebase, robot.load, robot.travel, capability)
+        robot.suitability = round(fis_solve(rulebase, robot.load, robot.travel, capability),2)
         # print(f"Suitability of {id} is {round((robot.suitability),2)}")
 
     # ranking of tasks:
     for id, robot in robots.items():
-        sensor = robot.sensor
-        suit = robot.suitability
-        np.append(bid, (sensor, suit))
-        print(bid)
+        # fill out the bid array:
+        bid[robot.id - 1, 0] = robot.sensor
+        bid[robot.id - 1, 1] = robot.suitability
 
+        # sort from high to low based on suitability:
+        sorted_arr = bid[bid[:, 1].astype(float).argsort()[::-1]]
+
+        # should add a third row with the ID and then do that solution to getting the highest types
+    
 
     # updating of robot parameters and tracking of metrics like distance:
         # need to update the load history if selected, and track the overall travel distance
