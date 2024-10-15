@@ -11,6 +11,7 @@ agents within a fictitious environment
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 import cv2
 import os
 import sys
@@ -19,6 +20,8 @@ from random import shuffle
 import math as m
 import heapq
 from PythonFISFunctions import *
+import time
+
 
 ################# Function & Class Definition ###################
 
@@ -188,13 +191,14 @@ def generate_image(width, height):
 resolution = 0.05               # resolution of the map, slam_toolbox default
 map_str = "warehouse_map.png"   # string value of the map name
 buffer = 5                      # distance in pixels that obstacles should be avoided
-sim = True                      # loop condition for simulation
 
 nr = 4                      # number of robots in the MRS
 x = 2                       # number of camera equipped robots within the MRS
 y = nr - x                  # number of measurement equipped robots within the MRS
 robots = {}                 # empty dictionary to hold robot objects once created
-bid = np.zeros((nr,2), dtype = object)      # empty array to store robot bids
+
+bid = np.zeros((nr,3), dtype = object)      # empty array to store robot bids
+total_travel = 0                            # total weighted travel distance, initialized
 
 positions = [(410, 317), (601, 117), (152, 329), (239, 70)]
 tasks = [(540, 263),(106, 271), (65, 63), (602, 196), (401, 190),
@@ -202,6 +206,7 @@ tasks = [(540, 263),(106, 271), (65, 63), (602, 196), (401, 190),
     
 # load the map and dilate the borders to get a buffered image for navigation:
 image = read_map(map_str, resolution)
+image_rgb = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
 buffered_image, spawn_locations = add_buffer(image, buffer)
 
 # shuffle indices of positions and tasks:
@@ -230,21 +235,17 @@ rulebase = fis_create()
 
 for current_task in tasks:
 
-    # print(f"Current Task: {current_task}\n")
-
     # query robots and determine suitability:
 
     for id, robot in robots.items():
         # determine the robots starting position:
         start = robot.position
-        # print(f"{id} position is {start}")
 
         # determine the length of the planned path:
         _, dist = dijkstra(buffered_image, start, current_task)
 
         # update the robots planned weighted travel distance:
         robot.travel = round((robot.weight * dist * resolution),3)
-        # print(f"{id} updated - travel distance is: {robot.travel}")
 
         # determine the capability matching of the robot:
 
@@ -252,35 +253,49 @@ for current_task in tasks:
 
         if check == "Imagery and Measurement" or check == "Measurement and Imagery":
             capability = 2
-            # print(f"Capability is Two Matches")
         elif check == "Imagery" or check == "Measurement":
             capability = 1
-            # print(f"Capability is One Match")
         else:
             capability = 0
-            # print(f"Capability is No Match")
 
         # need to use the fuzzy inference system to determine the suitability
         # of a given robot for the task:
 
         robot.suitability = round(fis_solve(rulebase, robot.load, robot.travel, capability),2)
-        # print(f"Suitability of {id} is {round((robot.suitability),2)}")
 
-    # ranking of tasks:
-    for id, robot in robots.items():
         # fill out the bid array:
         bid[robot.id - 1, 0] = robot.sensor
         bid[robot.id - 1, 1] = robot.suitability
-
-        # sort from high to low based on suitability:
-        sorted_arr = bid[bid[:, 1].astype(float).argsort()[::-1]]
-
-        # should add a third row with the ID and then do that solution to getting the highest types
+        bid[robot.id - 1, 2] = robot.id
     
+    # sort the bids by highest to lowest suitability:
+    sorted_arr = bid[bid[:, 1].astype(float).argsort()[::-1]]
 
-    # updating of robot parameters and tracking of metrics like distance:
-        # need to update the load history if selected, and track the overall travel distance
+    imagery_selected = None
+    measurement_selected = None
 
+    # choose the highest suitability for both capability types:
+
+    for row in sorted_arr:
+        if row[0] == 'Imagery' and imagery_selected is None:
+            imagery_selected = row
+        elif row[0] == 'Measurement' and measurement_selected is None:
+            measurement_selected = row
+    
+        if imagery_selected is not None and measurement_selected is not None:
+            break
+   
+   # these robots have been selected, send them to the task site and update:
+
+    for id, robot in robots.items():
+        if robot.id == imagery_selected[2]:
+            robot.load += 1
+            robot.position = (current_task[0] + random.randint(-3,4), current_task[1] + random.randint(-3,4))
+            total_travel += robot.travel
+        elif robot.id == measurement_selected[2]:
+            robot.load += 1
+            robot.position = (current_task[0] + random.randint(-3,4), current_task[1] + random.randint(-3,4))
+            total_travel += robot.travel
 
 
 
