@@ -240,14 +240,12 @@ def draw_circles_on_image(image):
     cv2.circle(image, (int(current_task[0]), int(current_task[1])), 3, (255, 0, 0), -1)
     return image
 
-cv2.namedWindow("Task Allocation Simulation", cv2.WINDOW_NORMAL)
-cv2.resizeWindow("Task Allocation Simulation", 900, 600)
-
 for current_task in tasks:
 
     combined_image = draw_circles_on_image(image_rgb.copy())
-    cv2.imshow("Task Allocation Simulation", combined_image)
-    cv2.waitKey(1)
+    plt.imshow(combined_image)
+    plt.draw()
+    plt.pause(0.5)
 
     # query robots and determine suitability:
 
@@ -281,8 +279,9 @@ for current_task in tasks:
         bid[robot.id - 1, 1] = robot.suitability
         bid[robot.id - 1, 2] = robot.id
 
-    cv2.imshow("Task Allocation Simulation", combined_image)
-    cv2.waitKey()
+    plt.imshow(combined_image)
+    plt.draw()
+    plt.pause(1)
 
     # sort the bids by highest to lowest suitability:
     sorted_arr = bid[bid[:, 1].astype(float).argsort()[::-1]]
@@ -311,5 +310,6 @@ for current_task in tasks:
             total_travel += robot.travel
 
     combined_image = draw_circles_on_image(image_rgb.copy())
-    cv2.imshow("Task Allocation Simulation", combined_image)
-    cv2.waitKey(1)
+    plt.imshow(combined_image)
+    plt.draw()
+    plt.pause(1)
