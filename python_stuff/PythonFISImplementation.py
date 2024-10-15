@@ -37,7 +37,7 @@ class Robot:
     - their position within space
     - a weight, which is used to resolution the impact of their travelling
     - a suitability, which is to be calculated using the FIS
-    - an allocation tag, which is used in the allocation of tasks
+    - a color used in plotting
     """
     
     def __init__(self, id, sensor, position):
@@ -48,7 +48,7 @@ class Robot:
         self.travel = 0.0
         self.weight = float(1 + random.uniform(-0.1, 0.1))
         self.suitability = 0.0
-        self.allocated = "False"
+        self.color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
     # for querying: 
 
@@ -233,7 +233,21 @@ for num in range(1, nr+1):
 # create fuzzy inference rulebase:
 rulebase = fis_create()
 
+def draw_circles_on_image(image):
+    for robot in robots.values(): 
+        position = robot.position
+        cv2.circle(image, (int(position[0]), int(position[1])), 3, robot.color, -1)  
+    cv2.circle(image, (int(current_task[0]), int(current_task[1])), 3, (255, 0, 0), -1)
+    return image
+
+cv2.namedWindow("Task Allocation Simulation", cv2.WINDOW_NORMAL)
+cv2.resizeWindow("Task Allocation Simulation", 900, 600)
+
 for current_task in tasks:
+
+    combined_image = draw_circles_on_image(image_rgb.copy())
+    cv2.imshow("Task Allocation Simulation", combined_image)
+    cv2.waitKey(1)
 
     # query robots and determine suitability:
 
@@ -242,7 +256,11 @@ for current_task in tasks:
         start = robot.position
 
         # determine the length of the planned path:
-        _, dist = dijkstra(buffered_image, start, current_task)
+        shortest_path, dist = dijkstra(buffered_image, start, current_task)
+        
+        if shortest_path is not None:
+            for x,y in shortest_path:
+                combined_image[y,x] = robot.color
 
         # update the robots planned weighted travel distance:
         robot.travel = round((robot.weight * dist * resolution),3)
@@ -251,12 +269,7 @@ for current_task in tasks:
 
         check = robot.sensor
 
-        if check == "Imagery and Measurement" or check == "Measurement and Imagery":
-            capability = 2
-        elif check == "Imagery" or check == "Measurement":
-            capability = 1
-        else:
-            capability = 0
+        capability = 2 if check in ["Imagery and Measurement", "Measurement and Imagery"] else 1 if check in ["Imagery", "Measurement"] else 0
 
         # need to use the fuzzy inference system to determine the suitability
         # of a given robot for the task:
@@ -267,7 +280,10 @@ for current_task in tasks:
         bid[robot.id - 1, 0] = robot.sensor
         bid[robot.id - 1, 1] = robot.suitability
         bid[robot.id - 1, 2] = robot.id
-    
+
+    cv2.imshow("Task Allocation Simulation", combined_image)
+    cv2.waitKey()
+
     # sort the bids by highest to lowest suitability:
     sorted_arr = bid[bid[:, 1].astype(float).argsort()[::-1]]
 
@@ -288,38 +304,12 @@ for current_task in tasks:
    # these robots have been selected, send them to the task site and update:
 
     for id, robot in robots.items():
-        if robot.id == imagery_selected[2]:
+        if robot.id == imagery_selected[2] or robot.id == measurement_selected[2]:
             robot.load += 1
-            robot.position = (current_task[0] + random.randint(-3,4), current_task[1] + random.randint(-3,4))
-            total_travel += robot.travel
-        elif robot.id == measurement_selected[2]:
-            robot.load += 1
-            robot.position = (current_task[0] + random.randint(-3,4), current_task[1] + random.randint(-3,4))
+            # randomly update the robot position to within the task location:
+            robot.position = (current_task[0] + random.randint(-7,7), current_task[1] + random.randint(-7,7))
             total_travel += robot.travel
 
-
-
-
-    
-    
-
-# # while sim == True:
-
-# start = np.array((410,317))
-# end = np.array((619,75))
-
-# shortest_path, distance = dijkstra(buffered_image, start, end)
-
-# if shortest_path is not None:
-#     image_rgb = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
-
-#     for x,y in shortest_path:
-#         image_rgb[y,x] = [255, 0, 0]
-        
-#     print(f'Path length is {round((distance*resolution),2)} m')
-#     plt.imshow(image_rgb)
-#     plt.show()
-# else:
-#     print("Goal is unreachable.")
-#     plt.imshow(image, cmap = "gray")
-#     plt.show()
+    combined_image = draw_circles_on_image(image_rgb.copy())
+    cv2.imshow("Task Allocation Simulation", combined_image)
+    cv2.waitKey(1)
