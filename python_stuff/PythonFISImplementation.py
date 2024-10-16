@@ -242,7 +242,6 @@ for num in range(1, nr+1):
 
 # initialize plot:
 fig = plt.subplot(1,1,1)
-
 plt.scatter(0,0, color = (1, 0, 0), label = 'Task')
 for id, robot in robots.items():
     plt.scatter(0,0, color = (robot.color[0]/255, robot.color[1]/255, robot.color[2]/255), label = robot.id)  
