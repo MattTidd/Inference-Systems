@@ -21,6 +21,7 @@ import math as m
 import heapq
 from PythonFISFunctions import *
 import time
+import pandas as pd
 
 
 ################# Function & Class Definition ###################
@@ -183,7 +184,7 @@ def generate_image(width, height):
 def draw_circles_on_image(image):
     for robot in robots.values(): 
         position = robot.position
-        cv2.circle(image, (int(position[0]), int(position[1])), 3, robot.color, -1)  
+        cv2.circle(image, (int(position[0]), int(position[1])), 3, robot.color, -1)
     cv2.circle(image, (int(current_task[0]), int(current_task[1])), 3, (255, 0, 0), -1)
     return image
 
@@ -210,7 +211,7 @@ bid = np.zeros((nr,3), dtype = object)      # empty array to store robot bids
 cumulative_distance = 0                            # cumulative weighted travel distance amongst all robots, initialized
 
 positions = [(410, 317), (601, 117), (152, 329), (239, 70)]
-tasks = [(540, 263),(106, 271), (65, 63), (602, 196), (401, 190),
+tasks = [(540, 263),(106, 271), (65, 63), (602, 196),
          (401, 190), (313, 79), (487, 229)]
     
 # load the map and dilate the borders to get a buffered image for navigation:
@@ -238,6 +239,14 @@ for num in range(1, nr+1):
             sensor = "Measurement",
             position = positions[num-1],
         )
+
+# initialize plot:
+fig = plt.subplot(1,1,1)
+
+plt.scatter(0,0, color = (1, 0, 0), label = 'Task')
+for id, robot in robots.items():
+    plt.scatter(0,0, color = (robot.color[0]/255, robot.color[1]/255, robot.color[2]/255), label = robot.id)  
+plt.legend()
 
 # create fuzzy inference rulebase:
 rulebase = fis_create()
@@ -306,7 +315,7 @@ for current_task in tasks:
 
     for id, robot in robots.items():
         if robot.id == imagery_selected[2] or robot.id == measurement_selected[2]:
-            # increase the load history of the robot:
+            # increment the load history of the robot:
             robot.load += 1
             # randomly update the robot position to within the task location:
             robot.position = (current_task[0] + random.randint(-7,7), current_task[1] + random.randint(-7,7))
@@ -314,6 +323,18 @@ for current_task in tasks:
             robot.total += robot.travel
             # keep track of the total distance that all robots have travelled:
             cumulative_distance += robot.travel
+
+        # update table to showcase each robot's values:
+
+    # print robot data in terminal:
+    robots_data = [
+    {'Robot ID': robot.id, 'Sensor Type': robot.sensor, 'Load History': robot.load, 'Weighted Distance to Task': robot.travel, 'Total Weighted Distance': robot.total,
+     'Suitability': robot.suitability}
+    for robot in robots.values()
+    ]
+
+    df = pd.DataFrame(robots_data)
+    print(df.to_string(index = False, justify = 'center'))
 
     combined_image = draw_circles_on_image(image_rgb.copy())
     plt.imshow(combined_image)
