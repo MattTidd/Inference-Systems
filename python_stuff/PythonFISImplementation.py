@@ -32,7 +32,8 @@ class Robot:
     - an ID tag, for referencing
     - a load history, which denotes how many times the robot has 
       gone to the task site
-    - a travel distance, which represents how far a robot has traveled
+    - a travel distance, which represents how far a robot has to travel to the task site
+    - a total travel distance that they have travelled overall
     - a sensor type, either imagery, measurement, or both
     - their position within space
     - a weight, which is used to resolution the impact of their travelling
@@ -46,6 +47,7 @@ class Robot:
         self.load = 0.0
         self.position = position
         self.travel = 0.0
+        self.total = 0.0
         self.weight = float(1 + random.uniform(-0.1, 0.1))
         self.suitability = 0.0
         self.color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
@@ -178,6 +180,13 @@ def generate_image(width, height):
     else:
         print('Image saving failed')
 
+def draw_circles_on_image(image):
+    for robot in robots.values(): 
+        position = robot.position
+        cv2.circle(image, (int(position[0]), int(position[1])), 3, robot.color, -1)  
+    cv2.circle(image, (int(current_task[0]), int(current_task[1])), 3, (255, 0, 0), -1)
+    return image
+
 #################             Main             ###################
 
 # for robot simulation:
@@ -198,7 +207,7 @@ y = nr - x                  # number of measurement equipped robots within the M
 robots = {}                 # empty dictionary to hold robot objects once created
 
 bid = np.zeros((nr,3), dtype = object)      # empty array to store robot bids
-total_travel = 0                            # total weighted travel distance, initialized
+cumulative_distance = 0                            # cumulative weighted travel distance amongst all robots, initialized
 
 positions = [(410, 317), (601, 117), (152, 329), (239, 70)]
 tasks = [(540, 263),(106, 271), (65, 63), (602, 196), (401, 190),
@@ -232,13 +241,6 @@ for num in range(1, nr+1):
 
 # create fuzzy inference rulebase:
 rulebase = fis_create()
-
-def draw_circles_on_image(image):
-    for robot in robots.values(): 
-        position = robot.position
-        cv2.circle(image, (int(position[0]), int(position[1])), 3, robot.color, -1)  
-    cv2.circle(image, (int(current_task[0]), int(current_task[1])), 3, (255, 0, 0), -1)
-    return image
 
 for current_task in tasks:
 
@@ -304,12 +306,17 @@ for current_task in tasks:
 
     for id, robot in robots.items():
         if robot.id == imagery_selected[2] or robot.id == measurement_selected[2]:
+            # increase the load history of the robot:
             robot.load += 1
             # randomly update the robot position to within the task location:
             robot.position = (current_task[0] + random.randint(-7,7), current_task[1] + random.randint(-7,7))
-            total_travel += robot.travel
+            # increment the robots individual total travel distance:
+            robot.total += robot.travel
+            # keep track of the total distance that all robots have travelled:
+            cumulative_distance += robot.travel
 
     combined_image = draw_circles_on_image(image_rgb.copy())
     plt.imshow(combined_image)
     plt.draw()
     plt.pause(1)
+
