@@ -1,171 +1,420 @@
 """
+This program is for creating and spawning robots within a given
+task environment, such that tasks can be allocated to them using
+a fuzzy inference system.
 
-This program is a Python implementation of a Fuzzy Inference System (FIS)
-that was first designed within MATLAB, using the Fuzzy Logic Designer.
-
-This FIS is then going to be ported into Python for use in MRTA, where it will eventually 
-become a ROS2 package.
+This is for testing the fuzzy inference system on fake, simulated 
+agents within a fictitious environment
 
 """
 ######################## Import Packages ########################
 
 import numpy as np
-import skfuzzy as fuzz
-from skfuzzy import control as ctrl
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-import time
+import cv2
+import os
+import sys
+import random
+import math as m
+import heapq
+from PythonFISFunctions import *
+import pandas as pd
+import tkinter as tk
+import statistics
 
-###################### Function Definition ######################
 
-def fis_create():
+################# Function & Class Definition ###################
 
-    ################ FIS Step 1: Define Fuzzy Sets ##################
-
+class Robot:
     """
-    Must firstly define the input linguistic variables. This involves:
-        - Defining the linguistic variable itself
-        - Defining the crisp universe of discourse for these variables
-        - Defining the linguistic values and their membership functions
+    This is a simplistic robot class for use in the FIS, it is 
+    used to create robotic objects. A robot consists of:
+    - an ID tag, for referencing
+    - a sensor type, either imagery, measurement, or both
+    - a load history, which denotes how many times the robot has 
+      gone to the task site
+    - their position within space
+    - a travel distance, which represents how far a robot has to travel to the task site
+    - a total travel distance that they have travelled overall
+    - a weight, which is used to quantify the impact of their travelling
+    - a suitability, which is to be calculated using the FIS
+    - a color used in plotting
     """
-    # universes of discourse:
+    
+    # constructor for robot objects:
+    def __init__(self, id, sensor, position):
+        self.id = id
+        self.sensor = sensor
+        self.load = 0.0
+        self.position = position
+        self.travel = 0.0
+        self.total = 0.0
+        self.weight = float(1 + random.uniform(-0.1, 0.1))
+        self.suitability = 0.0
+        self.color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
-    lh_range = [0, (5/6), 4, 5, 6, (55/6), 10]          # crisp values of importance from 0 to 10
-    wtd_range = [0, (25/6), 20, 25, 30, (271/6), 50]    # crisp values of importance from 0 to 50
-    cap_range = [0, 1, 2]                               # crisp values of importance from 0 to 2
+    # for querying robots:
+    def display_robot_info(self):
+        return (f"Robot ID: {self.id}\n"
+                f"Position: {self.position}\n"
+                f"Sensor Type: {self.sensor}\n"
+                f"Load History: {self.load}\n"
+                f"Travelled Distance: {self.travel}\n"
+                f"Suitability: {self.suitability}")
 
-    # define linguistic input variables:
+def read_map(map_str, resolution):
 
-    lh = ctrl.Antecedent(lh_range, 'Load History')
-    wtd = ctrl.Antecedent(wtd_range, 'Weighted Travel Distance')
-    cap = ctrl.Antecedent(cap_range, 'Capabilities')
+    # get cwd, list all directories and append to the file path of the maps
+    current_dir = os.getcwd()
+    files_in_dir = os.listdir(current_dir)
+    file_path = os.path.join(current_dir, files_in_dir[files_in_dir.index('python_stuff')], "maps", str(map_str))
 
-    # define membership functions for the input variables:
-    #   - we have 3 linguistic terms for each variable
+    # check if that map exists, read image if it does
+    if not os.path.isfile(file_path):
+        sys.exit('No such file exists')
+    else: 
+        image = cv2.imread(file_path,0)
 
-    lh['Low'] = fuzz.trimf(lh.universe, [0, 0, 6])
-    lh['Medium'] = fuzz.trimf(lh.universe, [5/6, 5, 55/6])
-    lh['High'] = fuzz.trimf(lh.universe, [4, 10, 10])
+    # load the map and dilate the borders to get a buffered image for navigation:
+    image_rgb = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+    buffered_image, spawn_locations = add_buffer(image, buffer)
 
-    wtd['Low'] = fuzz.trimf(wtd.universe, [0, 0, 30])
-    wtd['Medium'] = fuzz.trimf(wtd.universe, [25/6, 25, 271/6])
-    wtd['High'] = fuzz.trimf(wtd.universe, [20, 50, 50])
+    return image_rgb, buffered_image
 
-    cap['No Matches'] = fuzz.trimf(cap.universe, [0, 0, 0])
-    cap['One Match'] = fuzz.trimf(cap.universe, [1, 1, 1])
-    cap['Two Matches'] = fuzz.trimf(cap.universe, [2, 2, 2])
+def dijkstra(image, start, goal):
 
-    """
-    Now we can define the output linguistic variable. This involves:
-        - Defining the linguistic variable itself
-        - Defining the crisp universe of discourse for this variable
-        - Defining the linguistic value and its membership function
-    """
+    # first need to get the dimensionality of the image:
+    rows, cols = image.shape
 
-    # universe of discourse:
+    # swap the (x, y) input to (y, x) format for internal use - cv2 has y,x notation
+    start = (start[1], start[0])  # swap (x, y) -> (y, x)
+    goal = (goal[1], goal[0])     # swap (x, y) -> (y, x)
 
-    suit_range = [0, (5/12), (25/12), 2.5, (35/12), (55/12), 5, (65/12), (85/12), 7.5, (95/12), (115/12), 10]
+    # need to initialize both the distance map and the previous node map:
+    dist = np.full((rows,cols), np.inf)  # set other distances to a very big number
+    dist[start] = 0                      # set the initial starting distance to 0
 
-    # define linguistic output variable:
+    # need to track the parent of each node such that the resulting path can be reconstructed:
+    parent = {start: None}
 
-    suit = ctrl.Consequent(suit_range, 'Suitability')
+    # start the priority queue to store the distance values in x and y:
+    pq = [(0, start)]
 
-    # membership functions for linguistic values:
+    # encode the directions that the robot can move, assuming 8 options of movement at each given
+    # node, 45 degree offsets (holonomic movement):
+    directions = [
+        (-1,0), (1,0), (0,-1), (0,1),    # left, right, down, up
+        (-1,-1), (-1,1), (1,-1), (1,1)   # diagonals
+    ]
 
-    suit['Very Low'] = fuzz.trimf(suit.universe, [0, 0, 25/12])
-    suit['Low'] = fuzz.trimf(suit.universe, [5/12, 2.5, 55/12])
-    suit['Medium'] = fuzz.trimf(suit.universe, [35/12, 5, 85/12])
-    suit['High'] = fuzz.trimf(suit.universe, [65/12, 7.5, 115/12])
-    suit['Very High'] = fuzz.trimf(suit.universe, [95/12, 10, 10])
+    # define a set for the visited node:
+    visited = set()
 
-    ################ FIS Step 2: Define Rule-Base ###################
+    while pq:
+        current_dist, (x, y) = heapq.heappop(pq)
+        
+        # if the node has already been visited, skip it
+        if (x, y) in visited:
+            continue
+        visited.add((x, y))
+        
+        # if we reached the goal, reconstruct the path:
+        if (x, y) == goal:
+            path = []
+            while (x,y) != start:
+                path.append((y,x))
+                x,y = parent[(x,y)]
+            path.append((start[1],start[0]))
+            return path[::-1], dist[goal] # reverse path 
+        
+    # explore neighbors
+        for dx, dy in directions:
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < rows and 0 <= ny < cols and (nx, ny) not in visited:
+                # ignore black borders
+                if image[nx, ny] >= 254:  # threshold for white space
+                    # calculate the movement cost
+                    movement_cost = m.sqrt(2) if dx != 0 and dy != 0 else 1
+                    new_dist = current_dist + movement_cost
+                    
+                    # if a shorter path is found, update the distance and push to pq
+                    if new_dist < dist[nx, ny]:
+                        dist[nx, ny] = new_dist
+                        parent[(nx,ny)] = (x,y)
+                        heapq.heappush(pq, (new_dist, (nx, ny)))
+    
+    return None, None # if goal unreachable
 
-    """
-    Now we can define the fuzzy rule base. For a system with 3
-    linguistic inputs, each with 3 linguistic variables, the 
-    rule-base can contain a maximum of 27 rules for a full
-    description
+def add_buffer(image, buffer_size):
 
-    The following rules were selected based on their provided
-    surface of control, which was sculpted iteratively through
-    the rules.
+    # create a binary mask where black (0) and gray (205) areas are marked
+    mask = np.where((image == 0) | (image == 205), 1, 0).astype(np.uint8)
+    
+    # create a kernel for dilation (buffer expansion)
+    kernel = np.ones((buffer_size, buffer_size), np.uint8)
+    
+    # dilate the mask (expand obstacles)
+    dilated_mask = cv2.dilate(mask, kernel, iterations=1)
+    
+    # create a new image where dilated areas are treated as non-navigable (set to black)
+    buffered_image = image.copy()
+    buffered_image[dilated_mask == 1] = 0  # set dilated areas to black (0)
 
-    """
-    rulebase = []
+    # white space detection:
+    spawn_locations = np.flip(np.column_stack(np.where(np.flipud(buffered_image) >= 254)),axis = 1)
+    
+    return buffered_image, spawn_locations
 
-    # define rules for the mismatched case:
+def generate_image(width, height):
 
-    rulebase.append(ctrl.Rule(cap['No Matches'], suit['Very Low']))
+    # generate a blank png for use in mapping:
+    blank_image = np.ones((height, width, 3), dtype=np.uint8) * 205
 
-    # define rules for the one-match case:
+    # specify path:
+    files_in_dir = os.listdir(os.getcwd())
+    file_path = os.path.join(os.getcwd(), files_in_dir[files_in_dir.index('python_stuff')], "maps")
 
-    rulebase.append(ctrl.Rule(lh['Low'] & wtd['Low'] & cap['One Match'], suit['High']))
-    rulebase.append(ctrl.Rule(lh['Medium'] & wtd['Low'] & cap['One Match'], suit['Medium']))
-    rulebase.append(ctrl.Rule(lh['High'] & wtd['Low'] & cap['One Match'], suit['Medium']))
-    rulebase.append(ctrl.Rule(lh['Low'] & wtd['Medium'] & cap['One Match'], suit['Medium']))
-    rulebase.append(ctrl.Rule(lh['Medium'] & wtd['Medium'] & cap['One Match'], suit['Low']))
-    rulebase.append(ctrl.Rule(lh['High'] & wtd['Medium'] & cap['One Match'], suit['Low']))
-    rulebase.append(ctrl.Rule(lh['Low'] & wtd['High'] & cap['One Match'], suit['Medium']))
-    rulebase.append(ctrl.Rule(lh['Medium'] & wtd['High'] & cap['One Match'], suit['Low']))
-    rulebase.append(ctrl.Rule(lh['High'] & wtd['High'] & cap['One Match'], suit['Very Low']))
+    # write the image to variable that will return a flag for true or false
+    a = cv2.imwrite(os.path.join(file_path, 'blank_image.png'), blank_image)
 
-    # define rules for the two-match case:
+    # verify that the image was actually created:
+    if a == True:
+        print('Image saved successfully')
+    else:
+        print('Image saving failed')
 
-    rulebase.append(ctrl.Rule(lh['Low'] & wtd['Low'] & cap['Two Matches'], suit['Very High']))
-    rulebase.append(ctrl.Rule(lh['Medium'] & wtd['Low'] & cap['Two Matches'], suit['High']))
-    rulebase.append(ctrl.Rule(lh['High'] & wtd['Low'] & cap['Two Matches'], suit['High']))
-    rulebase.append(ctrl.Rule(lh['Low'] & wtd['Medium'] & cap['Two Matches'], suit['High']))
-    rulebase.append(ctrl.Rule(lh['Medium'] & wtd['Medium'] & cap['Two Matches'], suit['Medium']))
-    rulebase.append(ctrl.Rule(lh['High'] & wtd['Medium'] & cap['Two Matches'], suit['Medium']))
-    rulebase.append(ctrl.Rule(lh['Low'] & wtd['High'] & cap['Two Matches'], suit['High']))
-    rulebase.append(ctrl.Rule(lh['Medium'] & wtd['High'] & cap['Two Matches'], suit['Medium']))
-    rulebase.append(ctrl.Rule(lh['High'] & wtd['High'] & cap['Two Matches'], suit['Very Low']))
+def draw_circles_on_image(image):
 
-    # define sculpting rules:
+    # for every robot:
+    for robot in robots.values(): 
+        # extract robot position
+        position = robot.position
 
-    rulebase.append(ctrl.Rule(lh['High'] & cap['One Match'], suit['Very Low']))
-    rulebase.append(ctrl.Rule(wtd['High'] & cap['One Match'], suit['Very Low']))
+        # draw circle on position of robot
+        cv2.circle(image, (int(position[0]), int(position[1])), 3, robot.color, -1)
+    
+    # draw a circle on the task also
+    cv2.circle(image, (int(current_task[0]), int(current_task[1])), 3, (255, 0, 0), -1)
 
-    rulebase.append(ctrl.Rule(lh['High'] & cap['Two Matches'], suit['Very Low']))
-    rulebase.append(ctrl.Rule(wtd['High'] & cap['Two Matches'], suit['Very Low']))
+    return image
 
-    return rulebase
+def initialize_plot():
+    
+    # start a tkinter window
+    root = tk.Tk()
 
-def fis_solve(rulebase, load, travel, capability):
+    # get screen width & height off of tkinter window, calculate figure height
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    dpi = 100
+    fig_width_in = (screen_width*0.8)/dpi
+    fig_height_in = (screen_height*0.8)/dpi
 
-    """
-    We first create the control system, and we can run simulations on this control system
-    by further passing inputs into it, and then getting it to compute the output.
+    # kill tkinter
+    root.destroy()
 
-    """
+    # make a figure, set the size and position of the figure
+    fig = plt.figure(figsize = (fig_width_in, fig_height_in), dpi = dpi)
+    ax = fig.add_subplot(1,1,1)
+    figure_manager = plt.get_current_fig_manager()
+    fig_width = int(fig_width_in * dpi)
+    fig_height = int(fig_height_in * dpi)
+    x_position = (screen_width - fig_width) // 2
+    y_position = (screen_height - fig_height) // 2
+    figure_manager.window.wm_geometry(f"{fig_width}x{fig_height}+{x_position}+{y_position}")
 
-    # create control system:
+    # scatter in the corner for legend 
+    plt.scatter(0,0, color = (1, 0, 0), label = 'Task')
+    for id, robot in robots.items():
+        plt.scatter(0,0, color = (robot.color[0]/255, robot.color[1]/255, robot.color[2]/255), label = robot.id)  
+    plt.legend()
 
-    fis_ctrl = ctrl.ControlSystem(rulebase)
+#################             Main             ###################
 
-    # create an instance of the control system for simulation:
+# simulation parameters:
+resolution = 0.05               # resolution of the map, slam_toolbox default
+map_str = "warehouse_map.png"   # string value of the map name
+visualize = False               # whether to view or not
+buffer = 5                      # distance in pixels that obstacles should be avoided
 
-    sim = ctrl.ControlSystemSimulation(fis_ctrl)
+nr = 4                      # number of robots in the MRS
+x = 2                       # number of camera equipped robots within the MRS
+y = nr - x                  # number of measurement equipped robots within the MRS
+task_num = 7               # number of task sites
+sim_length = 5              # number of times to simulate allocation
+robots = {}                 # empty dictionary to hold robot objects once created
 
-    # solve:
+bid = np.zeros((nr,3), dtype = object)      # empty array to store robot bids
+cumulative_distance = 0                     # cumulative weighted travel distance amongst all robots, initialized
 
-    sim.input['Load History'] = load
-    sim.input['Weighted Travel Distance'] = travel
-    sim.input['Capabilities'] = capability
+loads = []              # initialize empty array of loads
+total_travel = []       # initialize empty array of total distance travelled per robot
 
-    sim.compute()
-
-    result = sim.output['Suitability']
-    return result
-
-######################        Main         ######################
-
-load = 2
-travel = 14
-capability = 1
-
-start = time.time()
+# create fuzzy inference rulebase:
 rulebase = fis_create()
-result = fis_solve(rulebase, load ,travel, capability)
-elapsed = (time.time()-start)
-print(f"Suitability is: {round(result,2)}, Computation Time was: {round(elapsed,4)} sec")
+
+# initialize map:
+image_rgb, buffered_image = read_map(map_str, resolution)
+
+# initialize plot:
+initialize_plot()
+
+for i in range(0,sim_length):
+    nr = 4                      # number of robots in the MRS
+    x = 2                       # number of camera equipped robots within the MRS
+    y = nr - x                  # number of measurement equipped robots within the MRS
+    match map_str:
+    # for the warehouse case:
+        case "warehouse_map.png":
+            locations = [(64,63), (64,157), (64,231), (63,300), (175, 65), (172,123), 
+                (171,188), (180,262), (182,330), (288,74), (221,120), (238,192),
+                (229,260), (241,321), (405,324), (405, 105), (339,146), (342,248),
+                (285,265), (425,98), (422,150), (417,226), (428,266), (490,304),
+                (539,332), (559,290), (591,327),(558,259), (633,333), (481,115),
+                (544,115), (604,115), (487,179), (547,179), (603,179), (600,67)]
+            random.shuffle(locations)   # shuffle the locations list so that each time the simulation is ran the robots and tasks are in different locations
+            tasks = locations[0:task_num]
+            positions = locations[task_num::]
+
+    # for the lab case:    
+        case "edited_map.png":
+            locations = [(36,297), (29,276), (59,300), (73,293), (82,266), (121,278),
+                        (106,287), (46,229), (83,232), (102,204), (80,183), (50,174),
+                        (77,151), (125,159), (121,104), (118,82), (80,76), (77,49),
+                        (76,26), (121,20), (145,23), (185,23), (213,29), (217,66),
+                        (183,68), (153,66), (219,86), (235,74), (257,96), (284,80),
+                        (63,90), (187,63), (159,11), (71,214), (75,143), (49,294)]
+            random.shuffle(locations)   # shuffle the locations list so that each time the simulation is ran the robots and tasks are in different locations
+            tasks = locations[0:task_num]
+            positions = locations[task_num::]  
+  
+    # spawn robots based on the user defined mission parameters:
+    for num in range(1, nr+1):
+        robot_name = f"Robot {num}"
+
+        # if we haven't exceeded the number of imagery robots
+        if num <= x:
+            robots[robot_name] = Robot(
+                id = num,
+                sensor = "Imagery",
+                position = positions[num-1],
+            )
+        # else make measurement robots    
+        else:
+            robots[robot_name] = Robot(
+                id = num,
+                sensor = "Measurement",
+                position = positions[num-1],
+            )
+
+            # determine task and robot sites: 
+    
+    for current_task in tasks:
+
+        # draw the markers for the initial positions of everything
+        combined_image = draw_circles_on_image(image_rgb.copy())
+        if visualize == True:
+            plt.imshow(combined_image)
+            plt.draw()
+            plt.pause(0.5)
+
+        # query robots and determine suitability:
+        for id, robot in robots.items():
+
+            # determine the robots starting position:
+            start = robot.position
+
+            # determine the length of the planned path:
+            shortest_path, dist = dijkstra(buffered_image, start, current_task)
+            
+            # add the path if it exists:
+            if shortest_path is not None:
+                for x,y in shortest_path:
+                    combined_image[y,x] = robot.color
+
+            # update the robots planned weighted travel distance:
+            robot.travel = round((robot.weight * dist * resolution),3)
+
+            # determine the capability matching of the robot:
+            check = robot.sensor
+
+            capability = 2 if check in ["Imagery and Measurement", "Measurement and Imagery"] else 1 if check in ["Imagery", "Measurement"] else 0
+
+            # need to use the fuzzy inference system to determine the suitability
+            # of a given robot for the task:
+            robot.suitability = round(fis_solve(rulebase, robot.load, robot.travel, capability),2)
+
+            # fill out the bid array:
+            bid[robot.id - 1, 0] = robot.sensor
+            bid[robot.id - 1, 1] = robot.suitability
+            bid[robot.id - 1, 2] = robot.id
+
+        # re draw with the path:
+        if visualize == True:
+            plt.imshow(combined_image)
+            plt.draw()
+            plt.pause(1)
+
+        # sort the bids by highest to lowest suitability:
+        sorted_arr = bid[bid[:, 1].astype(float).argsort()[::-1]]
+
+        imagery_selected = None
+        measurement_selected = None
+
+        # choose the highest suitability for both capability types:
+        for row in sorted_arr:
+            if row[0] == 'Imagery' and imagery_selected is None:
+                imagery_selected = row
+            elif row[0] == 'Measurement' and measurement_selected is None:
+                measurement_selected = row
+        
+            if imagery_selected is not None and measurement_selected is not None:
+                break
+    
+        # these robots have been selected, send them to the task site and update:
+        for id, robot in robots.items():
+            if robot.id == imagery_selected[2] or robot.id == measurement_selected[2]:
+
+                # increment the load history of the robot:
+                robot.load += 1
+
+                # randomly update the robot position to within the task location:
+                robot.position = (current_task[0] + random.randint(-7,7), current_task[1] + random.randint(-7,7))
+
+                # increment the robots individual total travel distance:
+                robot.total += robot.travel
+
+                # keep track of the total distance that all robots have travelled:
+                cumulative_distance += robot.travel
+
+        # print robot data in terminal:
+
+        robots_data = [
+        {'Robot ID': robot.id, 'Sensor Type': robot.sensor, 'Load History': robot.load, 'Weighted Distance to Task': robot.travel, 'Total Weighted Distance': robot.total,
+        'Suitability': robot.suitability}
+        for robot in robots.values()
+        ]
+
+        df = pd.DataFrame(robots_data)
+
+        # draw after positions have been updated:
+        combined_image = draw_circles_on_image(image_rgb.copy())
+
+        if visualize == True:
+            print(df.to_string(index = False, justify = 'center'))
+            plt.imshow(combined_image)
+            plt.draw()
+            plt.pause(1)
+
+    # get metrics after running simulation:
+
+    loads.append(df['Load History'].tolist())
+    total_travel.append(df['Total Weighted Distance'].tolist())
+    print(f"simulation {i+1}/{sim_length}")
+
+
+loads = np.array(loads)
+total_travel = np.array(total_travel)
+print(f"Average Load History: {loads.mean()}, Average Total Distance: {total_travel.mean()} m")
+print('buffer')
+  
