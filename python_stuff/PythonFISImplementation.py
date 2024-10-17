@@ -232,7 +232,8 @@ def initialize_plot():
 
 # simulation parameters:
 resolution = 0.05               # resolution of the map, slam_toolbox default
-map_str = "edited_map.png"   # string value of the map name
+map_str = "warehouse_map.png"   # string value of the map name
+visualize = True                # whether to view or not
 buffer = 5                      # distance in pixels that obstacles should be avoided
 
 nr = 4                      # number of robots in the MRS
@@ -302,9 +303,10 @@ for current_task in tasks:
 
     # draw the markers for the initial positions of everything
     combined_image = draw_circles_on_image(image_rgb.copy())
-    plt.imshow(combined_image)
-    plt.draw()
-    plt.pause(0.5)
+    if visualize == True:
+        plt.imshow(combined_image)
+        plt.draw()
+        plt.pause(0.5)
 
     # query robots and determine suitability:
     for id, robot in robots.items():
@@ -338,9 +340,10 @@ for current_task in tasks:
         bid[robot.id - 1, 2] = robot.id
 
     # re draw with the path:
-    plt.imshow(combined_image)
-    plt.draw()
-    plt.pause(1)
+    if visualize == True:
+        plt.imshow(combined_image)
+        plt.draw()
+        plt.pause(1)
 
     # sort the bids by highest to lowest suitability:
     sorted_arr = bid[bid[:, 1].astype(float).argsort()[::-1]]
@@ -386,6 +389,14 @@ for current_task in tasks:
 
     # draw after positions have been updated:
     combined_image = draw_circles_on_image(image_rgb.copy())
-    plt.imshow(combined_image)
-    plt.draw()
-    plt.pause(1)
+    if visualize == True:
+        plt.imshow(combined_image)
+        plt.draw()
+        plt.pause(1)
+
+# get metrics after running simulation:
+
+loads = df['Load History'].mean()
+total_travel = df['Total Weighted Distance'].mean()
+
+print(f"Average Load History: {loads}, Average Total Distance: {round(total_travel,2)} m")
