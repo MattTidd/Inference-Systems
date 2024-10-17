@@ -199,29 +199,44 @@ def draw_circles_on_image(image):
 
 # simulation parameters:
 resolution = 0.05               # resolution of the map, slam_toolbox default
-map_str = "warehouse_map.png"   # string value of the map name
+map_str = "edited_map.png"   # string value of the map name
 buffer = 5                      # distance in pixels that obstacles should be avoided
 
 nr = 4                      # number of robots in the MRS
 x = 2                       # number of camera equipped robots within the MRS
 y = nr - x                  # number of measurement equipped robots within the MRS
+task_num = 5                # number of task sites and ultimately the length of the simulation
 robots = {}                 # empty dictionary to hold robot objects once created
 
 bid = np.zeros((nr,3), dtype = object)      # empty array to store robot bids
-cumulative_distance = 0                            # cumulative weighted travel distance amongst all robots, initialized
+cumulative_distance = 0                     # cumulative weighted travel distance amongst all robots, initialized
 
-positions = [(410, 317), (601, 117), (152, 329), (239, 70)]
-tasks = [(540, 263),(106, 271), (65, 63), (602, 196),
-         (401, 190), (313, 79), (487, 229)]
-    
+match map_str:
+    case "warehouse_map.png":
+        locations = [(64,63), (64,157), (64,231), (63,300), (175, 65), (172,123), 
+             (171,188), (180,262), (182,330), (288,74), (221,120), (238,192),
+             (229,260), (241,321), (405,324), (405, 105), (339,146), (342,248),
+             (285,265), (425,98), (422,150), (417,226), (428,266), (490,304),
+             (539,332), (559,290), (591,327),(558,259), (633,333), (481,115),
+             (544,115), (604,115), (487,179), (547,179), (603,179), (600,67)]
+        random.shuffle(locations)   # shuffle the locations list so that each time the simulation is ran the robots and tasks are in different locations
+        tasks = locations[0:task_num]
+        positions = locations[task_num::]
+    case "edited_map.png":
+        locations = [(36,297), (29,276), (59,300), (73,293), (82,266), (121,278),
+                    (106,287), (46,229), (83,232), (102,204), (80,183), (50,174),
+                    (77,151), (125,159), (121,104), (118,82), (80,76), (77,49),
+                    (76,26), (121,20), (145,23), (185,23), (213,29), (217,66),
+                    (183,68), (153,66), (219,86), (235,74), (257,96), (284,80),
+                    (63,90), (187,63), (159,11), (71,214), (75,143), (49,294)]
+        random.shuffle(locations)
+        tasks = locations[0:task_num]
+        positions = locations[task_num::]   
+
 # load the map and dilate the borders to get a buffered image for navigation:
 image = read_map(map_str, resolution)
 image_rgb = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
 buffered_image, spawn_locations = add_buffer(image, buffer)
-
-# shuffle indices of positions and tasks:
-random.shuffle(positions)   # shuffle the positions of the robots so that each time the simulation is ran the robots are in different locations
-random.shuffle(tasks)       # shuffle the ordering of the task locations so that each time the simulation is ran the task ordering is different
 
 # spawn robots based on the user defined mission parameters:
 for num in range(1, nr+1):
@@ -339,4 +354,3 @@ for current_task in tasks:
     plt.imshow(combined_image)
     plt.draw()
     plt.pause(1)
-
