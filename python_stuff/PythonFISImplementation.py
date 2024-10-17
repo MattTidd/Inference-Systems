@@ -11,17 +11,15 @@ agents within a fictitious environment
 
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
 import cv2
 import os
 import sys
 import random
-from random import shuffle
 import math as m
 import heapq
 from PythonFISFunctions import *
-import time
 import pandas as pd
+import tkinter as tk
 
 
 ################# Function & Class Definition ###################
@@ -31,17 +29,18 @@ class Robot:
     This is a simplistic robot class for use in the FIS, it is 
     used to create robotic objects. A robot consists of:
     - an ID tag, for referencing
+    - a sensor type, either imagery, measurement, or both
     - a load history, which denotes how many times the robot has 
       gone to the task site
+    - their position within space
     - a travel distance, which represents how far a robot has to travel to the task site
     - a total travel distance that they have travelled overall
-    - a sensor type, either imagery, measurement, or both
-    - their position within space
-    - a weight, which is used to resolution the impact of their travelling
+    - a weight, which is used to quantify the impact of their travelling
     - a suitability, which is to be calculated using the FIS
     - a color used in plotting
     """
     
+    # constructor for robot objects:
     def __init__(self, id, sensor, position):
         self.id = id
         self.sensor = sensor
@@ -53,8 +52,7 @@ class Robot:
         self.suitability = 0.0
         self.color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
-    # for querying: 
-
+    # for querying robots:
     def display_robot_info(self):
         return (f"Robot ID: {self.id}\n"
                 f"Position: {self.position}\n"
@@ -65,60 +63,61 @@ class Robot:
 
 def read_map(map_str, resolution):
 
+    # get cwd, list all directories and append to the file path of the maps
     current_dir = os.getcwd()
     files_in_dir = os.listdir(current_dir)
     file_path = os.path.join(current_dir, files_in_dir[files_in_dir.index('python_stuff')], "maps", str(map_str))
 
+    # check if that map exists, read image if it does
     if not os.path.isfile(file_path):
         sys.exit('No such file exists')
     else: 
         image = cv2.imread(file_path,0)
 
-    return image
+    # load the map and dilate the borders to get a buffered image for navigation:
+    image_rgb = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+    buffered_image, spawn_locations = add_buffer(image, buffer)
+
+    return image_rgb, buffered_image
 
 def dijkstra(image, start, goal):
-    # first need to get the dimensionality of the image:
 
+    # first need to get the dimensionality of the image:
     rows, cols = image.shape
 
-    # Swap the (x, y) input to (y, x) format for internal use
-    start = (start[1], start[0])  # Swap (x, y) -> (y, x)
-    goal = (goal[1], goal[0])     # Swap (x, y) -> (y, x)
+    # swap the (x, y) input to (y, x) format for internal use - cv2 has y,x notation
+    start = (start[1], start[0])  # swap (x, y) -> (y, x)
+    goal = (goal[1], goal[0])     # swap (x, y) -> (y, x)
 
     # need to initialize both the distance map and the previous node map:
-
     dist = np.full((rows,cols), np.inf)  # set other distances to a very big number
-    dist[start] = 0                 # set the initial starting distance to 0
+    dist[start] = 0                      # set the initial starting distance to 0
 
     # need to track the parent of each node such that the resulting path can be reconstructed:
-
     parent = {start: None}
 
     # start the priority queue to store the distance values in x and y:
-
     pq = [(0, start)]
 
-    # encode the directions that the robot can move, assuming a 8 options of movement at each given
-    # node (holonomic movement):
-
+    # encode the directions that the robot can move, assuming 8 options of movement at each given
+    # node, 45 degree offsets (holonomic movement):
     directions = [
         (-1,0), (1,0), (0,-1), (0,1),    # left, right, down, up
         (-1,-1), (-1,1), (1,-1), (1,1)   # diagonals
     ]
 
     # define a set for the visited node:
-
     visited = set()
 
     while pq:
         current_dist, (x, y) = heapq.heappop(pq)
         
-        # If the node has already been visited, skip it
+        # if the node has already been visited, skip it
         if (x, y) in visited:
             continue
         visited.add((x, y))
         
-        # If we reached the goal, reconstruct the path:
+        # if we reached the goal, reconstruct the path:
         if (x, y) == goal:
             path = []
             while (x,y) != start:
@@ -127,17 +126,17 @@ def dijkstra(image, start, goal):
             path.append((start[1],start[0]))
             return path[::-1], dist[goal] # reverse path 
         
-    # Explore neighbors
+    # explore neighbors
         for dx, dy in directions:
             nx, ny = x + dx, y + dy
             if 0 <= nx < rows and 0 <= ny < cols and (nx, ny) not in visited:
-                # Ignore black borders (assuming 0 is black, adjust threshold as needed)
-                if image[nx, ny] >= 254:  # Change this threshold based on your image
-                    # Calculate the movement cost
+                # ignore black borders
+                if image[nx, ny] >= 254:  # threshold for white space
+                    # calculate the movement cost
                     movement_cost = m.sqrt(2) if dx != 0 and dy != 0 else 1
                     new_dist = current_dist + movement_cost
                     
-                    # If a shorter path is found, update the distance and push to pq
+                    # if a shorter path is found, update the distance and push to pq
                     if new_dist < dist[nx, ny]:
                         dist[nx, ny] = new_dist
                         parent[(nx,ny)] = (x,y)
@@ -146,25 +145,27 @@ def dijkstra(image, start, goal):
     return None, None # if goal unreachable
 
 def add_buffer(image, buffer_size):
-    # Create a binary mask where black (0) and gray (205) areas are marked
+
+    # create a binary mask where black (0) and gray (205) areas are marked
     mask = np.where((image == 0) | (image == 205), 1, 0).astype(np.uint8)
     
-    # Create a kernel for dilation (buffer expansion)
+    # create a kernel for dilation (buffer expansion)
     kernel = np.ones((buffer_size, buffer_size), np.uint8)
     
-    # Dilate the mask (expand obstacles)
+    # dilate the mask (expand obstacles)
     dilated_mask = cv2.dilate(mask, kernel, iterations=1)
     
-    # Create a new image where dilated areas are treated as non-navigable (set to black)
+    # create a new image where dilated areas are treated as non-navigable (set to black)
     buffered_image = image.copy()
-    buffered_image[dilated_mask == 1] = 0  # Set dilated areas to black (0)
+    buffered_image[dilated_mask == 1] = 0  # set dilated areas to black (0)
 
-     # white space detection:
+    # white space detection:
     spawn_locations = np.flip(np.column_stack(np.where(np.flipud(buffered_image) >= 254)),axis = 1)
     
     return buffered_image, spawn_locations
 
 def generate_image(width, height):
+
     # generate a blank png for use in mapping:
     blank_image = np.ones((height, width, 3), dtype=np.uint8) * 205
 
@@ -182,20 +183,52 @@ def generate_image(width, height):
         print('Image saving failed')
 
 def draw_circles_on_image(image):
+
+    # for every robot:
     for robot in robots.values(): 
+        # extract robot position
         position = robot.position
+
+        # draw circle on position of robot
         cv2.circle(image, (int(position[0]), int(position[1])), 3, robot.color, -1)
+    
+    # draw a circle on the task also
     cv2.circle(image, (int(current_task[0]), int(current_task[1])), 3, (255, 0, 0), -1)
+
     return image
 
-#################             Main             ###################
+def initialize_plot():
+    
+    # start a tkinter window
+    root = tk.Tk()
 
-# for robot simulation:
-#   - spawn x many robots within set positions, 
-#   - randomly spawn a task site
-#   - use the fuzzy inference system to determine who is most suitable
-#   - allocate the task to the most suitable robot
-#   - update robot params and repeat
+    # get screen width & height off of tkinter window, calculate figure height
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    dpi = 100
+    fig_width_in = (screen_width*0.8)/dpi
+    fig_height_in = (screen_height*0.8)/dpi
+
+    # kill tkinter
+    root.destroy()
+
+    # make a figure, set the size and position of the figure
+    fig = plt.figure(figsize = (fig_width_in, fig_height_in), dpi = dpi)
+    ax = fig.add_subplot(1,1,1)
+    figure_manager = plt.get_current_fig_manager()
+    fig_width = int(fig_width_in * dpi)
+    fig_height = int(fig_height_in * dpi)
+    x_position = (screen_width - fig_width) // 2
+    y_position = (screen_height - fig_height) // 2
+    figure_manager.window.wm_geometry(f"{fig_width}x{fig_height}+{x_position}+{y_position}")
+
+    # scatter in the corner for legend 
+    plt.scatter(0,0, color = (1, 0, 0), label = 'Task')
+    for id, robot in robots.items():
+        plt.scatter(0,0, color = (robot.color[0]/255, robot.color[1]/255, robot.color[2]/255), label = robot.id)  
+    plt.legend()
+
+#################             Main             ###################
 
 # simulation parameters:
 resolution = 0.05               # resolution of the map, slam_toolbox default
@@ -205,13 +238,15 @@ buffer = 5                      # distance in pixels that obstacles should be av
 nr = 4                      # number of robots in the MRS
 x = 2                       # number of camera equipped robots within the MRS
 y = nr - x                  # number of measurement equipped robots within the MRS
-task_num = 5                # number of task sites and ultimately the length of the simulation
+task_num = 10               # number of task sites and ultimately the length of the simulation
 robots = {}                 # empty dictionary to hold robot objects once created
 
 bid = np.zeros((nr,3), dtype = object)      # empty array to store robot bids
 cumulative_distance = 0                     # cumulative weighted travel distance amongst all robots, initialized
 
+# determine task and robot sites:
 match map_str:
+    # for the warehouse case:
     case "warehouse_map.png":
         locations = [(64,63), (64,157), (64,231), (63,300), (175, 65), (172,123), 
              (171,188), (180,262), (182,330), (288,74), (221,120), (238,192),
@@ -222,6 +257,8 @@ match map_str:
         random.shuffle(locations)   # shuffle the locations list so that each time the simulation is ran the robots and tasks are in different locations
         tasks = locations[0:task_num]
         positions = locations[task_num::]
+
+    # for the lab case:    
     case "edited_map.png":
         locations = [(36,297), (29,276), (59,300), (73,293), (82,266), (121,278),
                     (106,287), (46,229), (83,232), (102,204), (80,183), (50,174),
@@ -229,25 +266,22 @@ match map_str:
                     (76,26), (121,20), (145,23), (185,23), (213,29), (217,66),
                     (183,68), (153,66), (219,86), (235,74), (257,96), (284,80),
                     (63,90), (187,63), (159,11), (71,214), (75,143), (49,294)]
-        random.shuffle(locations)
+        random.shuffle(locations)   # shuffle the locations list so that each time the simulation is ran the robots and tasks are in different locations
         tasks = locations[0:task_num]
         positions = locations[task_num::]   
-
-# load the map and dilate the borders to get a buffered image for navigation:
-image = read_map(map_str, resolution)
-image_rgb = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
-buffered_image, spawn_locations = add_buffer(image, buffer)
 
 # spawn robots based on the user defined mission parameters:
 for num in range(1, nr+1):
     robot_name = f"Robot {num}"
 
+    # if we haven't exceeded the number of imagery robots
     if num <= x:
         robots[robot_name] = Robot(
             id = num,
             sensor = "Imagery",
             position = positions[num-1],
         )
+    # else make measurement robots    
     else:
         robots[robot_name] = Robot(
             id = num,
@@ -255,32 +289,33 @@ for num in range(1, nr+1):
             position = positions[num-1],
         )
 
+# initialize map:
+image_rgb, buffered_image = read_map(map_str, resolution)
+
 # initialize plot:
-fig = plt.subplot(1,1,1)
-plt.scatter(0,0, color = (1, 0, 0), label = 'Task')
-for id, robot in robots.items():
-    plt.scatter(0,0, color = (robot.color[0]/255, robot.color[1]/255, robot.color[2]/255), label = robot.id)  
-plt.legend()
+initialize_plot()
 
 # create fuzzy inference rulebase:
 rulebase = fis_create()
 
 for current_task in tasks:
 
+    # draw the markers for the initial positions of everything
     combined_image = draw_circles_on_image(image_rgb.copy())
     plt.imshow(combined_image)
     plt.draw()
     plt.pause(0.5)
 
     # query robots and determine suitability:
-
     for id, robot in robots.items():
+
         # determine the robots starting position:
         start = robot.position
 
         # determine the length of the planned path:
         shortest_path, dist = dijkstra(buffered_image, start, current_task)
         
+        # add the path if it exists:
         if shortest_path is not None:
             for x,y in shortest_path:
                 combined_image[y,x] = robot.color
@@ -289,14 +324,12 @@ for current_task in tasks:
         robot.travel = round((robot.weight * dist * resolution),3)
 
         # determine the capability matching of the robot:
-
         check = robot.sensor
 
         capability = 2 if check in ["Imagery and Measurement", "Measurement and Imagery"] else 1 if check in ["Imagery", "Measurement"] else 0
 
         # need to use the fuzzy inference system to determine the suitability
         # of a given robot for the task:
-
         robot.suitability = round(fis_solve(rulebase, robot.load, robot.travel, capability),2)
 
         # fill out the bid array:
@@ -304,6 +337,7 @@ for current_task in tasks:
         bid[robot.id - 1, 1] = robot.suitability
         bid[robot.id - 1, 2] = robot.id
 
+    # re draw with the path:
     plt.imshow(combined_image)
     plt.draw()
     plt.pause(1)
@@ -315,7 +349,6 @@ for current_task in tasks:
     measurement_selected = None
 
     # choose the highest suitability for both capability types:
-
     for row in sorted_arr:
         if row[0] == 'Imagery' and imagery_selected is None:
             imagery_selected = row
@@ -326,19 +359,20 @@ for current_task in tasks:
             break
    
    # these robots have been selected, send them to the task site and update:
-
     for id, robot in robots.items():
         if robot.id == imagery_selected[2] or robot.id == measurement_selected[2]:
+
             # increment the load history of the robot:
             robot.load += 1
+
             # randomly update the robot position to within the task location:
             robot.position = (current_task[0] + random.randint(-7,7), current_task[1] + random.randint(-7,7))
+
             # increment the robots individual total travel distance:
             robot.total += robot.travel
+
             # keep track of the total distance that all robots have travelled:
             cumulative_distance += robot.travel
-
-        # update table to showcase each robot's values:
 
     # print robot data in terminal:
     robots_data = [
@@ -350,6 +384,7 @@ for current_task in tasks:
     df = pd.DataFrame(robots_data)
     print(df.to_string(index = False, justify = 'center'))
 
+    # draw after positions have been updated:
     combined_image = draw_circles_on_image(image_rgb.copy())
     plt.imshow(combined_image)
     plt.draw()
