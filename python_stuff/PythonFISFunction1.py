@@ -5,6 +5,10 @@ that was first designed within MATLAB, using the Fuzzy Logic Designer.
 
 This file serves to host the functions that are used within the FIS testing.
 
+This particular FIS utilizes the load history, weighted travel distance to task,
+and the capabilities of each robot expressed as a triangular singleton membership
+function.
+
 """
 ######################## Import Packages ########################
 
