@@ -30,8 +30,8 @@ def fis_create():
     """
     # universes of discourse:
 
-    lh_range = [0, (5/6), 4, 5, 6, (55/6), 10]          # crisp values of importance from 0 to 10
-    wtd_range = [0, (25/6), 20, 25, 30, (271/6), 50]    # crisp values of importance from 0 to 50
+    lh_range = [0, 5/6, 4, 5, 6, 55/6, 10]          # crisp values of importance from 0 to 10
+    wtd_range = [0, 25/6, 20, 25, 30, 271/6, 50]    # crisp values of importance from 0 to 50
     cap_range = [0, 1, 2]                               # crisp values of importance from 0 to 2
 
     # define linguistic input variables:
@@ -64,7 +64,7 @@ def fis_create():
 
     # universe of discourse:
 
-    suit_range = [0, (5/12), (25/12), 2.5, (35/12), (55/12), 5, (65/12), (85/12), 7.5, (95/12), (115/12), 10]
+    suit_range = [0, 5/12, 25/12, 2.5, 35/12, 55/12, 5, 65/12, 85/12, 7.5, 95/12, 115/12, 10]
 
     # define linguistic output variable:
 
