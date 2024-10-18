@@ -90,6 +90,9 @@ def fis_create():
     surface of control, which was sculpted iteratively through
     the rules.
 
+    This rule base consists of 27 primary rules and 5 secondary 
+    sculpting rules
+
     """
 
     rulebase = []
