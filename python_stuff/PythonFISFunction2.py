@@ -64,8 +64,42 @@ def fis_create():
 
     # universe of discourse:
 
-    suit_range = [0, (5/12), (25/12), 2.5, (35/12), (55/12), 5, (65/12), (85/12), 7.5, (95/12), (115/12), 10]
+    suit_range = [0, 5/12, 25/12, 2.5, 35/12, 55/12, 5, 65/12, 85/12, 7.5, 95/12, 115/12, 10]
 
+    # define linguistic output variable:
+
+    suit = ctrl.Consequent(suit_range, 'Suitability')
+
+    # membership functions for linguistic values:
+
+    suit['Very Low'] = fuzz.trimf(suit.universe, [0, 0, 25/12])
+    suit['Low'] = fuzz.trimf(suit.universe, [5/12, 2.5, 55/12])
+    suit['Medium'] = fuzz.trimf(suit.universe, [35/12, 5, 85/12])
+    suit['High'] = fuzz.trimf(suit.universe, [65/12, 7.5, 115/12])
+    suit['Very High'] = fuzz.trimf(suit.universe, [95/12, 10, 10])
+
+    ################ FIS Step 2: Define Rule-Base ###################
+
+    """
+    Now we can define the fuzzy rule base. For a system with 3
+    linguistic inputs, each with 3 linguistic variables, the 
+    rule-base can contain a maximum of 27 rules for a full
+    description
+
+    The following rules were selected based on their provided
+    surface of control, which was sculpted iteratively through
+    the rules.
+
+    """
+
+    rulebase = []
+
+    # commence defining the main rules:
+
+    rulebase.append(ctrl.rule(  ))
+
+    # commit after finishing function, commit when starting solver function, 
+    # commit when finishing staring function
 
 
    
