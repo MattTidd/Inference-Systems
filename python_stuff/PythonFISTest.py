@@ -17,7 +17,7 @@ import sys
 import random
 import math as m
 import heapq
-from PythonFISFunctions import *
+from PythonFISFunction1 import *
 import pandas as pd
 import tkinter as tk
 import statistics
