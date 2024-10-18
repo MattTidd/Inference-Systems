@@ -16,6 +16,8 @@ import numpy as np
 import skfuzzy as fuzz
 from skfuzzy import control as ctrl
 
+####################### Define Functions ########################
+
 def fis_create():
 
     ################ FIS Step 1: Define Fuzzy Sets ##################
