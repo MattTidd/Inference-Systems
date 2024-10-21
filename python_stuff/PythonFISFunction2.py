@@ -99,7 +99,31 @@ def fis_create():
 
     # commence defining the main rules:
 
-    rulebase.append(ctrl.rule(  ))
+    rulebase.append(ctrl.rule(lh['Low'] & dtt['Low'] & tdt['Low'], suit['High']))           # rule 01
+    rulebase.append(ctrl.rule(lh['Medium'] & dtt['Low'] & tdt['Low'], suit['High']))        # rule 02
+    rulebase.append(ctrl.rule(lh['High'] & dtt['Low'] & tdt['Low'], suit['Medium']))        # rule 03
+    rulebase.append(ctrl.rule(lh['Low'] & dtt['Medium'] & tdt['Low'], suit['High']))        # rule 04
+    rulebase.append(ctrl.rule(lh['Medium'] & dtt['Medium'] & tdt['Low'], suit['Medium']))   # rule 05
+    rulebase.append(ctrl.rule(lh['High'] & dtt['Medium'] & tdt['Low'], suit['Medium']))     # rule 06
+    rulebase.append(ctrl.rule(lh['Low'] & dtt['High'] & tdt['Low'], suit['Medium']))        # rule 07
+    rulebase.append(ctrl.rule(lh['Medium'] & dtt['High'] & tdt['Low'], suit['Medium']))     # rule 08
+    rulebase.append(ctrl.rule(lh['High'] & dtt['High'] & tdt['Low'], suit['Low']))          # rule 09
+    rulebase.append(ctrl.rule(lh['Low'] & dtt['Low'] & tdt['Medium'], suit['High']))        # rule 10
+    rulebase.append(ctrl.rule(lh['Medium'] & dtt['Low'] & tdt['Medium'], suit['Medium']))   # rule 11
+    rulebase.append(ctrl.rule(lh['High'] & dtt['Low'] & tdt['Medium'], suit['High']))       # rule 12
+    rulebase.append(ctrl.rule(lh['Low'] & dtt['Medium'] & tdt['Medium'], suit['Medium']))   # rule 13
+    rulebase.append(ctrl.rule(lh['Medium'] & dtt['Medium'] & tdt['Medium'], suit['Low']))   # rule 14
+    rulebase.append(ctrl.rule(lh['High'] & dtt['Medium'] & tdt['Medium'], suit['Low']))     # rule 15
+    rulebase.append(ctrl.rule(lh['Low'] & dtt['High'] & tdt['Medium'], suit['Medium']))     # rule 16
+    rulebase.append(ctrl.rule(lh['Medium'] & dtt['High'] & tdt['Medium'], suit['Low']))     # rule 17
+    rulebase.append(ctrl.rule(lh['High'] & dtt['High'] & tdt['Medium'], suit['Very Low']))  # rule 18
+    rulebase.append(ctrl.rule(lh['Low'] & dtt['Low'] & tdt['High'], suit['High']))
+    rulebase.append(ctrl.rule(lh['Low'] & dtt['Low'] & tdt['Low'], suit['High']))
+    rulebase.append(ctrl.rule(lh['Low'] & dtt['Low'] & tdt['Low'], suit['High']))
+    rulebase.append(ctrl.rule(lh['Low'] & dtt['Low'] & tdt['Low'], suit['High']))
+    rulebase.append(ctrl.rule(lh['Low'] & dtt['Low'] & tdt['Low'], suit['High']))
+    rulebase.append(ctrl.rule(lh['Low'] & dtt['Low'] & tdt['Low'], suit['High']))
+
 
     # commit after finishing function, commit when starting solver function, 
     # commit when finishing staring function
