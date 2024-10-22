@@ -3,7 +3,7 @@
 This program is a Python implementation of a Fuzzy Inference System (FIS)
 that was first designed within MATLAB, using the Fuzzy Logic Designer.
 
-This file serves to host the functions that are used within the FIS testing.
+This file serves to host the functions that are used within the FIS1 Test Folder.
 
 This particular FIS utilizes the load history, weighted travel distance to task,
 and the capabilities of each robot expressed as a triangular singleton membership
