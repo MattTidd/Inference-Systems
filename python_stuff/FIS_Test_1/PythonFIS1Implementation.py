@@ -23,7 +23,6 @@ from PythonFISFunction1 import *
 import pandas as pd
 import tkinter as tk
 
-
 ################# Function & Class Definition ###################
 
 class Robot:
