@@ -240,7 +240,7 @@ buffer = 5                      # distance in pixels that obstacles should be av
 nr = 4                      # number of robots in the MRS
 x = 2                       # number of camera equipped robots within the MRS
 y = nr - x                  # number of measurement equipped robots within the MRS
-task_num = 7               # number of task sites
+task_num = 7                # number of task sites
 sim_length = 5              # number of times to simulate allocation
 robots = {}                 # empty dictionary to hold robot objects once created
 
