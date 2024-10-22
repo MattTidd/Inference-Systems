@@ -6,6 +6,8 @@ a fuzzy inference system.
 This is for testing the fuzzy inference system on fake, simulated 
 agents within a fictitious environment
 
+THIS FILE RUNS ONE SIMULATION
+
 """
 ######################## Import Packages ########################
 
