@@ -164,13 +164,3 @@ def fis_solve(rulebase, load, distance, total_travel):
 
     result = sim.output['Suitability']
     return result
-
-
-rulebase = fis_create()
-
-load = 3
-distance = 17
-total_travel = 31
-
-suit = fis_solve(rulebase, load, distance, total_travel)
-print(f"suitability is: {suit}")
