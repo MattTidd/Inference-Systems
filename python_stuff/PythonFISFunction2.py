@@ -138,5 +138,30 @@ def fis_create():
     return rulebase
 
 
+def fis_solve(rulebase, load, distance, total_travel):
 
-   
+    """
+    We first create the control system, and we can run simulations on this control system
+    by further passing inputs into it, and then getting it to compute the output.
+
+    """
+
+    # create control system:
+
+    fis_ctrl = ctrl.ControlSystem(rulebase)
+
+    # create an instance of the control system for simulation:
+
+    sim = ctrl.ControlSystemSimulation(fis_ctrl)
+
+    # solve:
+
+    sim.input['Load History'] = load
+    sim.input['Distance to Task'] = distance
+    sim.input['Total Distance Travelled'] = total_travel
+
+    sim.compute()
+
+    result = sim.output['Suitability']
+    return result
+
