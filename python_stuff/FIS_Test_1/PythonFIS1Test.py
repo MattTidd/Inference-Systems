@@ -23,7 +23,7 @@ from PythonFISFunction1 import *
 import pandas as pd
 import tkinter as tk
 import statistics
-
+import time
 
 ################# Function & Class Definition ###################
 
@@ -242,8 +242,8 @@ buffer = 5                      # distance in pixels that obstacles should be av
 nr = 4                      # number of robots in the MRS
 x = 2                       # number of camera equipped robots within the MRS
 y = nr - x                  # number of measurement equipped robots within the MRS
-task_num = 7                # number of task sites
-sim_length = 5              # number of times to simulate allocation
+task_num = 10               # number of task sites
+sim_length = 250            # number of times to simulate allocation
 robots = {}                 # empty dictionary to hold robot objects once created
 
 bid = np.zeros((nr,3), dtype = object)      # empty array to store robot bids
@@ -261,10 +261,16 @@ image_rgb, buffered_image = read_map(map_str, resolution)
 # initialize plot:
 initialize_plot()
 
+# check time:
+
+begin = time.time()
+
 for i in range(0,sim_length):
     nr = 4                      # number of robots in the MRS
     x = 2                       # number of camera equipped robots within the MRS
     y = nr - x                  # number of measurement equipped robots within the MRS
+
+    # determine task and robot sites: 
     match map_str:
     # for the warehouse case:
         case "warehouse_map.png":
@@ -308,8 +314,6 @@ for i in range(0,sim_length):
                 sensor = "Measurement",
                 position = positions[num-1],
             )
-
-            # determine task and robot sites: 
     
     for current_task in tasks:
 
@@ -335,7 +339,7 @@ for i in range(0,sim_length):
                     combined_image[y,x] = robot.color
 
             # update the robots planned weighted travel distance:
-            robot.travel = round((robot.weight * dist * resolution),3)
+            robot.travel = round((dist * resolution),3)
 
             # determine the capability matching of the robot:
             check = robot.sensor
@@ -414,9 +418,13 @@ for i in range(0,sim_length):
     total_travel.append(df['Total Weighted Distance'].tolist())
     print(f"simulation {i+1}/{sim_length}")
 
+end = time.time()
 
 loads = np.array(loads)
 total_travel = np.array(total_travel)
-print(f"Average Load History: {loads.mean()}, Average Total Distance: {total_travel.mean()} m")
-print('buffer')
+print(f"Standard Deviation of Load History: {round(loads.std(),3)}\n"
+      f"Average Total Distance: {round(total_travel.mean(),2)}m\n"
+      f"Standard Deviation of Total Distance: {round(total_travel.std(),3)}m\n"
+      f"Elapsed Time: {round(((end - begin)/60),2)} minutes")
+
   
