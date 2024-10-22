@@ -117,16 +117,26 @@ def fis_create():
     rulebase.append(ctrl.rule(lh['Low'] & dtt['High'] & tdt['Medium'], suit['Medium']))     # rule 16
     rulebase.append(ctrl.rule(lh['Medium'] & dtt['High'] & tdt['Medium'], suit['Low']))     # rule 17
     rulebase.append(ctrl.rule(lh['High'] & dtt['High'] & tdt['Medium'], suit['Very Low']))  # rule 18
-    rulebase.append(ctrl.rule(lh['Low'] & dtt['Low'] & tdt['High'], suit['High']))
-    rulebase.append(ctrl.rule(lh['Low'] & dtt['Low'] & tdt['Low'], suit['High']))
-    rulebase.append(ctrl.rule(lh['Low'] & dtt['Low'] & tdt['Low'], suit['High']))
-    rulebase.append(ctrl.rule(lh['Low'] & dtt['Low'] & tdt['Low'], suit['High']))
-    rulebase.append(ctrl.rule(lh['Low'] & dtt['Low'] & tdt['Low'], suit['High']))
-    rulebase.append(ctrl.rule(lh['Low'] & dtt['Low'] & tdt['Low'], suit['High']))
+    rulebase.append(ctrl.rule(lh['Low'] & dtt['Low'] & tdt['High'], suit['Very Low']))      # rule 19
+    rulebase.append(ctrl.rule(lh['Medium'] & dtt['Low'] & tdt['High'], suit['Very Low']))   # rule 20
+    rulebase.append(ctrl.rule(lh['High'] & dtt['Low'] & tdt['High'], suit['Low']))          # rule 21  
+    rulebase.append(ctrl.rule(lh['Low'] & dtt['Medium'] & tdt['High'], suit['Medium']))     # rule 22
+    rulebase.append(ctrl.rule(lh['Medium'] & dtt['Medium'] & tdt['High'], suit['Low']))     # rule 23
+    rulebase.append(ctrl.rule(lh['High'] & dtt['Medium'] & tdt['High'], suit['Very Low']))  # rule 24
+    rulebase.append(ctrl.rule(lh['Low'] & dtt['High'] & tdt['High'], suit['Very Low']))     # rule 25
+    rulebase.append(ctrl.rule(lh['Medium'] & dtt['High'] & tdt['High'], suit['Very Low']))  # rule 26
+    rulebase.append(ctrl.rule(lh['High'] & dtt['High'] & tdt['High'], suit['Very Low']))    # rule 27
 
+    # define sculpting rules:
 
-    # commit after finishing function, commit when starting solver function, 
-    # commit when finishing staring function
+    rulebase.append(ctrl.rule(lh['High'], suit['Very Low']))            # rule 28
+    rulebase.append(ctrl.rule(dtt['High'], suit['Very Low']))           # rule 29
+    rulebase.append(ctrl.rule(tdt['High'], suit['Very Low']))           # rule 30
+    rulebase.append(ctrl.rule(dtt['Low'], suit['Very High']))           # rule 31
+    rulebase.append(ctrl.rule(lh['High'] & tdt['High'], suit['Low']))   # rule 32
+
+    return rulebase
+
 
 
    
