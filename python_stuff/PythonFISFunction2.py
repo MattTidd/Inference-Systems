@@ -81,16 +81,16 @@ def fis_create():
     ################ FIS Step 2: Define Rule-Base ###################
 
     """
-    Now we can define the fuzzy rule base. For a system with 3
+    Now we can define the fuzzy Rule base. For a system with 3
     linguistic inputs, each with 3 linguistic variables, the 
-    rule-base can contain a maximum of 27 rules for a full
+    Rule-base can contain a maximum of 27 rules for a full
     description
 
     The following rules were selected based on their provided
     surface of control, which was sculpted iteratively through
     the rules.
 
-    This rule base consists of 27 primary rules and 5 secondary 
+    This Rule base consists of 27 primary rules and 5 secondary 
     sculpting rules
 
     """
@@ -99,41 +99,41 @@ def fis_create():
 
     # commence defining the main rules:
 
-    rulebase.append(ctrl.rule(lh['Low'] & dtt['Low'] & tdt['Low'], suit['High']))           # rule 01
-    rulebase.append(ctrl.rule(lh['Medium'] & dtt['Low'] & tdt['Low'], suit['High']))        # rule 02
-    rulebase.append(ctrl.rule(lh['High'] & dtt['Low'] & tdt['Low'], suit['Medium']))        # rule 03
-    rulebase.append(ctrl.rule(lh['Low'] & dtt['Medium'] & tdt['Low'], suit['High']))        # rule 04
-    rulebase.append(ctrl.rule(lh['Medium'] & dtt['Medium'] & tdt['Low'], suit['Medium']))   # rule 05
-    rulebase.append(ctrl.rule(lh['High'] & dtt['Medium'] & tdt['Low'], suit['Medium']))     # rule 06
-    rulebase.append(ctrl.rule(lh['Low'] & dtt['High'] & tdt['Low'], suit['Medium']))        # rule 07
-    rulebase.append(ctrl.rule(lh['Medium'] & dtt['High'] & tdt['Low'], suit['Medium']))     # rule 08
-    rulebase.append(ctrl.rule(lh['High'] & dtt['High'] & tdt['Low'], suit['Low']))          # rule 09
-    rulebase.append(ctrl.rule(lh['Low'] & dtt['Low'] & tdt['Medium'], suit['High']))        # rule 10
-    rulebase.append(ctrl.rule(lh['Medium'] & dtt['Low'] & tdt['Medium'], suit['Medium']))   # rule 11
-    rulebase.append(ctrl.rule(lh['High'] & dtt['Low'] & tdt['Medium'], suit['High']))       # rule 12
-    rulebase.append(ctrl.rule(lh['Low'] & dtt['Medium'] & tdt['Medium'], suit['Medium']))   # rule 13
-    rulebase.append(ctrl.rule(lh['Medium'] & dtt['Medium'] & tdt['Medium'], suit['Low']))   # rule 14
-    rulebase.append(ctrl.rule(lh['High'] & dtt['Medium'] & tdt['Medium'], suit['Low']))     # rule 15
-    rulebase.append(ctrl.rule(lh['Low'] & dtt['High'] & tdt['Medium'], suit['Medium']))     # rule 16
-    rulebase.append(ctrl.rule(lh['Medium'] & dtt['High'] & tdt['Medium'], suit['Low']))     # rule 17
-    rulebase.append(ctrl.rule(lh['High'] & dtt['High'] & tdt['Medium'], suit['Very Low']))  # rule 18
-    rulebase.append(ctrl.rule(lh['Low'] & dtt['Low'] & tdt['High'], suit['Very Low']))      # rule 19
-    rulebase.append(ctrl.rule(lh['Medium'] & dtt['Low'] & tdt['High'], suit['Very Low']))   # rule 20
-    rulebase.append(ctrl.rule(lh['High'] & dtt['Low'] & tdt['High'], suit['Low']))          # rule 21  
-    rulebase.append(ctrl.rule(lh['Low'] & dtt['Medium'] & tdt['High'], suit['Medium']))     # rule 22
-    rulebase.append(ctrl.rule(lh['Medium'] & dtt['Medium'] & tdt['High'], suit['Low']))     # rule 23
-    rulebase.append(ctrl.rule(lh['High'] & dtt['Medium'] & tdt['High'], suit['Very Low']))  # rule 24
-    rulebase.append(ctrl.rule(lh['Low'] & dtt['High'] & tdt['High'], suit['Very Low']))     # rule 25
-    rulebase.append(ctrl.rule(lh['Medium'] & dtt['High'] & tdt['High'], suit['Very Low']))  # rule 26
-    rulebase.append(ctrl.rule(lh['High'] & dtt['High'] & tdt['High'], suit['Very Low']))    # rule 27
+    rulebase.append(ctrl.Rule(lh['Low'] & dtt['Low'] & tdt['Low'], suit['High']))           # Rule 01
+    rulebase.append(ctrl.Rule(lh['Medium'] & dtt['Low'] & tdt['Low'], suit['High']))        # Rule 02
+    rulebase.append(ctrl.Rule(lh['High'] & dtt['Low'] & tdt['Low'], suit['Medium']))        # Rule 03
+    rulebase.append(ctrl.Rule(lh['Low'] & dtt['Medium'] & tdt['Low'], suit['High']))        # Rule 04
+    rulebase.append(ctrl.Rule(lh['Medium'] & dtt['Medium'] & tdt['Low'], suit['Medium']))   # Rule 05
+    rulebase.append(ctrl.Rule(lh['High'] & dtt['Medium'] & tdt['Low'], suit['Medium']))     # Rule 06
+    rulebase.append(ctrl.Rule(lh['Low'] & dtt['High'] & tdt['Low'], suit['Medium']))        # Rule 07
+    rulebase.append(ctrl.Rule(lh['Medium'] & dtt['High'] & tdt['Low'], suit['Medium']))     # Rule 08
+    rulebase.append(ctrl.Rule(lh['High'] & dtt['High'] & tdt['Low'], suit['Low']))          # Rule 09
+    rulebase.append(ctrl.Rule(lh['Low'] & dtt['Low'] & tdt['Medium'], suit['High']))        # Rule 10
+    rulebase.append(ctrl.Rule(lh['Medium'] & dtt['Low'] & tdt['Medium'], suit['Medium']))   # Rule 11
+    rulebase.append(ctrl.Rule(lh['High'] & dtt['Low'] & tdt['Medium'], suit['High']))       # Rule 12
+    rulebase.append(ctrl.Rule(lh['Low'] & dtt['Medium'] & tdt['Medium'], suit['Medium']))   # Rule 13
+    rulebase.append(ctrl.Rule(lh['Medium'] & dtt['Medium'] & tdt['Medium'], suit['Low']))   # Rule 14
+    rulebase.append(ctrl.Rule(lh['High'] & dtt['Medium'] & tdt['Medium'], suit['Low']))     # Rule 15
+    rulebase.append(ctrl.Rule(lh['Low'] & dtt['High'] & tdt['Medium'], suit['Medium']))     # Rule 16
+    rulebase.append(ctrl.Rule(lh['Medium'] & dtt['High'] & tdt['Medium'], suit['Low']))     # Rule 17
+    rulebase.append(ctrl.Rule(lh['High'] & dtt['High'] & tdt['Medium'], suit['Very Low']))  # Rule 18
+    rulebase.append(ctrl.Rule(lh['Low'] & dtt['Low'] & tdt['High'], suit['Very Low']))      # Rule 19
+    rulebase.append(ctrl.Rule(lh['Medium'] & dtt['Low'] & tdt['High'], suit['Very Low']))   # Rule 20
+    rulebase.append(ctrl.Rule(lh['High'] & dtt['Low'] & tdt['High'], suit['Low']))          # Rule 21  
+    rulebase.append(ctrl.Rule(lh['Low'] & dtt['Medium'] & tdt['High'], suit['Medium']))     # Rule 22
+    rulebase.append(ctrl.Rule(lh['Medium'] & dtt['Medium'] & tdt['High'], suit['Low']))     # Rule 23
+    rulebase.append(ctrl.Rule(lh['High'] & dtt['Medium'] & tdt['High'], suit['Very Low']))  # Rule 24
+    rulebase.append(ctrl.Rule(lh['Low'] & dtt['High'] & tdt['High'], suit['Very Low']))     # Rule 25
+    rulebase.append(ctrl.Rule(lh['Medium'] & dtt['High'] & tdt['High'], suit['Very Low']))  # Rule 26
+    rulebase.append(ctrl.Rule(lh['High'] & dtt['High'] & tdt['High'], suit['Very Low']))    # Rule 27
 
     # define sculpting rules:
 
-    rulebase.append(ctrl.rule(lh['High'], suit['Very Low']))            # rule 28
-    rulebase.append(ctrl.rule(dtt['High'], suit['Very Low']))           # rule 29
-    rulebase.append(ctrl.rule(tdt['High'], suit['Very Low']))           # rule 30
-    rulebase.append(ctrl.rule(dtt['Low'], suit['Very High']))           # rule 31
-    rulebase.append(ctrl.rule(lh['High'] & tdt['High'], suit['Low']))   # rule 32
+    rulebase.append(ctrl.Rule(lh['High'], suit['Very Low']))            # Rule 28
+    rulebase.append(ctrl.Rule(dtt['High'], suit['Very Low']))           # Rule 29
+    rulebase.append(ctrl.Rule(tdt['High'], suit['Very Low']))           # Rule 30
+    rulebase.append(ctrl.Rule(dtt['Low'], suit['Very High']))           # Rule 31
+    rulebase.append(ctrl.Rule(lh['High'] & tdt['High'], suit['Low']))   # Rule 32
 
     return rulebase
 
@@ -165,3 +165,12 @@ def fis_solve(rulebase, load, distance, total_travel):
     result = sim.output['Suitability']
     return result
 
+
+rulebase = fis_create()
+
+load = 3
+distance = 17
+total_travel = 31
+
+suit = fis_solve(rulebase, load, distance, total_travel)
+print(f"suitability is: {suit}")
