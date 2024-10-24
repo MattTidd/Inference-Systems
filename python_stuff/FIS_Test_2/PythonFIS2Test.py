@@ -243,14 +243,19 @@ nr = 4                      # number of robots in the MRS
 x = 2                       # number of camera equipped robots within the MRS
 y = nr - x                  # number of measurement equipped robots within the MRS
 task_num = 10               # number of task sites
-sim_length = 250            # number of times to simulate allocation
+sim_length = 500            # number of times to simulate allocation
 robots = {}                 # empty dictionary to hold robot objects once created
 
 bid = np.zeros((nr,3), dtype = object)      # empty array to store robot bids
 cumulative_distance = 0                     # cumulative weighted travel distance amongst all robots, initialized
 
-loads = []              # initialize empty array of loads
-total_travel = []       # initialize empty array of total distance travelled per robot
+loads = []              # initialize empty list of loads
+total_travel = []       # initialize empty list of total distance travelled per robot
+
+# create empty pandas dataframes:
+
+inputs = pd.DataFrame()     # empty data frame for input 
+outputs = pd.DataFrame()    # empty data frame for output
 
 # create fuzzy inference rulebase:
 rulebase = fis_create()
@@ -366,6 +371,24 @@ for i in range(0,sim_length):
         
             if imagery_selected is not None and measurement_selected is not None:
                 break
+
+        # save the data that was used to make the decision:
+
+        input_data = [
+        {'Load History': robot.load, 'Distance to Task': robot.travel, 'Total Distance Traveled': robot.total}
+        for robot in robots.values()    
+        ]
+
+        input_df = pd.DataFrame(input_data)
+        inputs = pd.concat([inputs, input_df], ignore_index=True)
+
+        output_data = [
+            {'Suitability': robot.suitability}
+            for robot in robots.values()
+        ]
+
+        output_df = pd.DataFrame(output_data)
+        outputs = pd.concat([outputs, output_df], ignore_index=True)
     
         # these robots have been selected, send them to the task site and update:
         for id, robot in robots.items():
@@ -385,7 +408,7 @@ for i in range(0,sim_length):
 
         # print robot data in terminal:
         robots_data = [
-        {'Robot ID': robot.id, 'Sensor Type': robot.sensor, 'Load History': robot.load, 'Distance to Task': robot.travel, 'Total Distance Travelled': robot.total,
+        {'Robot ID': robot.id, 'Sensor Type': robot.sensor, 'Load History': robot.load , 'Distance to Task': robot.travel, 'Total Distance Travelled': robot.total,
         'Suitability': robot.suitability}
         for robot in robots.values()
         ]
@@ -407,6 +430,9 @@ for i in range(0,sim_length):
     print(f"simulation {i+1}/{sim_length}")
 
 end = time.time()
+
+inputs.to_csv('inputs.csv', index = False)
+outputs.to_csv('outputs.csv', index = False)
 
 loads = np.array(loads)
 total_travel = np.array(total_travel)
