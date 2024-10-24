@@ -243,7 +243,7 @@ nr = 4                      # number of robots in the MRS
 x = 2                       # number of camera equipped robots within the MRS
 y = nr - x                  # number of measurement equipped robots within the MRS
 task_num = 10               # number of task sites
-sim_length = 500            # number of times to simulate allocation
+sim_length = 250            # number of times to simulate allocation
 robots = {}                 # empty dictionary to hold robot objects once created
 
 bid = np.zeros((nr,3), dtype = object)      # empty array to store robot bids
