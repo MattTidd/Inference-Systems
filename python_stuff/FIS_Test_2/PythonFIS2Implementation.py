@@ -317,6 +317,9 @@ for current_task in tasks:
 
         # determine the length of the planned path:
         shortest_path, dist = dijkstra(buffered_image, start, current_task)
+
+        print(type(buffered_image))
+        print(buffered_image.shape)
         
         # add the path if it exists:
         if shortest_path is not None:
