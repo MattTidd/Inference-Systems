@@ -1,0 +1,75 @@
+[System]
+Name='MATLAB_FIS_V3'
+Type='mamdani'
+Version=2.0
+NumInputs=3
+NumOutputs=1
+NumRules=27
+AndMethod='min'
+OrMethod='max'
+ImpMethod='min'
+AggMethod='max'
+DefuzzMethod='centroid'
+
+[Input1]
+Name='Load History'
+Range=[0 10]
+NumMFs=3
+MF1='Low':'trimf',[0 0 6]
+MF2='Medium':'trimf',[0.833333333333333 5 9.16666666666667]
+MF3='High':'trimf',[4 10 10]
+
+[Input2]
+Name='Distance to Task'
+Range=[0 25]
+NumMFs=3
+MF1='Low':'trimf',[0 0 15]
+MF2='Medium':'trimf',[2.08333333333333 12.5 22.9166666666667]
+MF3='High':'trimf',[10 25 25]
+
+[Input3]
+Name='Total Distance Travelled'
+Range=[0 50]
+NumMFs=3
+MF1='Low':'trimf',[0 0 30]
+MF2='Medium':'trimf',[4.16666666666667 25 45.8333333333333]
+MF3='High':'trimf',[15 50 50]
+
+[Output1]
+Name='Suitability'
+Range=[0 10]
+NumMFs=5
+MF1='Very Low':'trimf',[0 0 2.08333]
+MF2='Low':'trimf',[0.416666666666667 2.5 4.58333333333333]
+MF3='Medium':'trimf',[2.91666666666667 5 7.08333333333333]
+MF4='High':'trimf',[5.41666666666667 7.5 9.58333333333333]
+MF5='Very High':'trimf',[7.91667 10 10]
+
+[Rules]
+1 1 1, 5 (1) : 1
+2 1 1, 4 (1) : 1
+3 1 1, 3 (1) : 1
+1 2 1, 4 (1) : 1
+2 2 1, 3 (1) : 1
+3 2 1, 3 (1) : 1
+1 3 1, 3 (1) : 1
+2 3 1, 3 (1) : 1
+3 3 1, 2 (1) : 1
+1 1 2, 4 (1) : 1
+2 1 2, 3 (1) : 1
+3 1 2, 3 (1) : 1
+1 2 2, 3 (1) : 1
+2 2 2, 2 (1) : 1
+3 2 2, 2 (1) : 1
+1 3 2, 3 (1) : 1
+2 3 2, 2 (1) : 1
+3 3 2, 1 (1) : 1
+1 1 3, 3 (1) : 1
+2 1 3, 3 (1) : 1
+3 1 3, 2 (1) : 1
+1 2 3, 3 (1) : 1
+2 2 3, 2 (1) : 1
+3 2 3, 1 (1) : 1
+1 3 3, 2 (1) : 1
+2 3 3, 1 (1) : 1
+3 3 3, 1 (1) : 1
