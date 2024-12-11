@@ -17,7 +17,7 @@ from PythonFISFunctionV3 import *
 
 #######################  Generate  Data  ########################
 # number of iterations for data generation:
-iterations = 10
+iterations = 15000
 # max value of universe of discourse for load:      
 max_ud_load = 10
 # max value of universe of discourse for distance to task:        
@@ -44,6 +44,8 @@ for i in range(iterations):
     # create next row, append to df:
     next_row = [load, distance, travelled, suit]
     df.iloc[i] = next_row
+    print(f"iteration {i+1}/{iterations}", end='\r')
 
 # export dataframe as a CSV:
-df.to_csv('V3_Data.csv', index = False)
+
+df.to_csv('Python_Design/FIS_TestV3/V3_Data.csv', index = False)
