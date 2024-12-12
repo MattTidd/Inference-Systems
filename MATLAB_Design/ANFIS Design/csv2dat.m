@@ -1,8 +1,8 @@
 % *************************************************************************
 % FILE NAME        : csv2dat.m
 % AUTHOR           : Matthew Tidd
-% DATE CREATED     : 30 Oct 2024
-% DATE MODIFIED    : 30 Oct 2024
+% DATE CREATED     : 11 Dec 2024
+% DATE MODIFIED    : 12 Dec 2024
 % *************************************************************************
 % Preamble:
 % *************************************************************************
@@ -13,28 +13,18 @@ clc ; clear ; close all ; format short;
 % Main:
 % *************************************************************************
 
-% get folder path:
-parentDirectory = fileparts(fileparts(cd))
+% get data path:
+subfolder_name = 'Data';
+folder_path = fullfile(pwd, subfolder_name);
 
-% tmr: get load the CSV data and turn into a .dat format
+% import data:
+train_input_data = readmatrix(fullfile(folder_path, "\CSVs\train_input.csv"));
+train_output_data = readmatrix(fullfile(folder_path, "\CSVs\train_output.csv"));
+test_input_data = readmatrix(fullfile(folder_path, "\CSVs\test_input.csv"));
+test_output_data = readmatrix(fullfile(folder_path, "\CSVs\test_output.csv"));
 
-% need to load the csv files and save them in a .dat format so that the
-% anfis app can load the data in:
-
-% data_folder_path = pwd
-
-% input_data = readmatrix('inputs.csv');
-% output_data = readmatrix('outputs.csv');
-% 
-% data = [input_data output_data];
-% 
-% writematrix(data, 'train_data.dat', 'Delimiter', ' ')
-% writematrix(input_data, 'inputs.dat', 'Delimiter', ' ');
-% writematrix(output_data, 'outputs.dat', 'Delimiter', ' ')
-% 
-% % check that it worked:
-% 
-% fid = fopen('inputs.dat');
-% dat_data = fread(fid, '*char').';
-% fclose(fid);
-% disp(dat_data)
+% convert to .dat format: 
+writematrix(train_input_data, fullfile(folder_path,"\DATs\train_input.dat"), 'Delimiter', ' ');
+writematrix(train_output_data, fullfile(folder_path,"\DATs\train_output.dat"), 'Delimiter', ' ');
+writematrix(test_input_data, fullfile(folder_path,"\DATs\test_input.dat"), 'Delimiter', ' ');
+writematrix(test_output_data, fullfile(folder_path,"\DATs\test_output.dat"), 'Delimiter', ' ');
