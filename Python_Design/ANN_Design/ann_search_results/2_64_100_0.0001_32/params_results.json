@@ -1,0 +1,20 @@
+{
+    "parameters": {
+        "num_layers": 2,
+        "num_neurons": 64,
+        "num_epochs": 100,
+        "learning_rate": 0.0001,
+        "use_batch_norm": true,
+        "use_dropout": true,
+        "batch_size": 32
+    },
+    "results": {
+        "loss": 0.23512931168079376,
+        "mae": 0.3779013752937317,
+        "root_mean_squared_error": 0.4849013388156891,
+        "val_loss": 0.03973213583230972,
+        "val_mae": 0.1542932391166687,
+        "val_root_mean_squared_error": 0.19932921230793,
+        "train_time": 21.75074315071106
+    }
+}
