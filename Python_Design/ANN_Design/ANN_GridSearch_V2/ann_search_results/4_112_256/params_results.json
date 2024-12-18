@@ -1,0 +1,22 @@
+{
+    "parameters": {
+        "num_layers": 4,
+        "num_neurons": 112,
+        "num_epochs": 500,
+        "learning_rate": 0.001,
+        "use_batch_norm": true,
+        "use_dropout": true,
+        "batch_size": 256
+    },
+    "results": {
+        "loss": 0.05797961354255676,
+        "mae": 0.18211425840854645,
+        "r2_score": 0.9735857248306274,
+        "root_mean_squared_error": 0.24078956246376038,
+        "val_loss": 0.013876563869416714,
+        "val_mae": 0.08987980335950851,
+        "val_r2_score": 0.9935277104377747,
+        "val_root_mean_squared_error": 0.1177988275885582,
+        "train_time": 60.29887104034424
+    }
+}
