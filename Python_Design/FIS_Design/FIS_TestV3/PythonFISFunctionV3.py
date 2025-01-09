@@ -32,13 +32,11 @@ def fis_create():
         - Defining the linguistic values and their membership functions
     """
     # universes of discourse:
-
     lh_range = [0, (5/6), 4, 5, 6, (55/6), 10]
     dtt_range = [0, (25/12), 10, 12.5, 15, (275/12), 25]
     tdt_range = [0, (25/6), 15, 25, 30, (275/6), 50]
 
     # define lingusitic input variables:
-
     lh = ctrl.Antecedent(lh_range, 'Load History')
     dtt = ctrl.Antecedent(dtt_range, 'Distance to Task')
     tdt = ctrl.Antecedent(tdt_range, 'Total Distance Travelled')
@@ -66,15 +64,12 @@ def fis_create():
     """
 
     # universe of discourse:
-
     suit_range = [0, 5/12, 25/12, 2.5, 35/12, 55/12, 5, 65/12, 85/12, 7.5, 95/12, 115/12, 10]
 
     # define linguistic output variable:
-
     suit = ctrl.Consequent(suit_range, 'Suitability')
 
     # membership functions for linguistic values:
-
     suit['Very Low'] = fuzz.trimf(suit.universe, [0, 0, 25/12])
     suit['Low'] = fuzz.trimf(suit.universe, [5/12, 2.5, 55/12])
     suit['Medium'] = fuzz.trimf(suit.universe, [35/12, 5, 85/12])
@@ -84,24 +79,22 @@ def fis_create():
     ################ FIS Step 2: Define Rule-Base ###################
 
     """
-    Now we can define the fuzzy Rule base. For a system with 3
+    Now we can define the fuzzy Rulebase. For a system with 3
     linguistic inputs, each with 3 linguistic variables, the 
-    Rule-base can contain a maximum of 27 rules for a full
+    Rulebase can contain a maximum of 27 rules for a full
     description
 
     The following rules were selected based on their provided
     surface of control, which was sculpted iteratively through
     the rules.
 
-    This Rule base consists of 27 primary rules and 5 secondary 
-    sculpting rules
+    This Rulebase consists of 27 rules.
 
     """
 
     rulebase = []
 
     # commence defining the main rules:
-
     rulebase.append(ctrl.Rule(lh['Low'] & dtt['Low'] & tdt['Low'], suit['Very High']))      # Rule 01
     rulebase.append(ctrl.Rule(lh['Medium'] & dtt['Low'] & tdt['Low'], suit['High']))        # Rule 02
     rulebase.append(ctrl.Rule(lh['High'] & dtt['Low'] & tdt['Low'], suit['Medium']))        # Rule 03
@@ -130,14 +123,6 @@ def fis_create():
     rulebase.append(ctrl.Rule(lh['Medium'] & dtt['High'] & tdt['High'], suit['Very Low']))  # Rule 26
     rulebase.append(ctrl.Rule(lh['High'] & dtt['High'] & tdt['High'], suit['Very Low']))    # Rule 27
 
-    # define sculpting rules:
-
-    rulebase.append(ctrl.Rule(lh['High'], suit['Very Low']))            # Rule 28
-    rulebase.append(ctrl.Rule(dtt['High'], suit['Very Low']))           # Rule 29
-    rulebase.append(ctrl.Rule(tdt['High'], suit['Very Low']))           # Rule 30
-    rulebase.append(ctrl.Rule(dtt['Low'], suit['Very High']))           # Rule 31
-    rulebase.append(ctrl.Rule(lh['High'] & tdt['High'], suit['Low']))   # Rule 32
-
     return rulebase
 
 
@@ -150,15 +135,12 @@ def fis_solve(rulebase, load, distance, total_travel):
     """
 
     # create control system:
-
     system = ctrl.ControlSystem(rulebase)
 
     # create an instance of the control system for simulation:
-
     sim = ctrl.ControlSystemSimulation(system)
 
     # solve:
-
     sim.input['Load History'] = load
     sim.input['Distance to Task'] = distance
     sim.input['Total Distance Travelled'] = total_travel
