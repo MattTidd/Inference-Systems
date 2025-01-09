@@ -120,7 +120,7 @@ def fis_create():
     rulebase.append(ctrl.Rule(lh['Low'] & dtt['High'] & tdt['Medium'], suit['Medium']))     # Rule 16
     rulebase.append(ctrl.Rule(lh['Medium'] & dtt['High'] & tdt['Medium'], suit['Low']))     # Rule 17
     rulebase.append(ctrl.Rule(lh['High'] & dtt['High'] & tdt['Medium'], suit['Very Low']))  # Rule 18
-    rulebase.append(ctrl.Rule(lh['Low'] & dtt['Low'] & tdt['High'], suit['Medium']))       # Rule 19
+    rulebase.append(ctrl.Rule(lh['Low'] & dtt['Low'] & tdt['High'], suit['Medium']))        # Rule 19
     rulebase.append(ctrl.Rule(lh['Medium'] & dtt['Low'] & tdt['High'], suit['Medium']))     # Rule 20
     rulebase.append(ctrl.Rule(lh['High'] & dtt['Low'] & tdt['High'], suit['Low']))          # Rule 21  
     rulebase.append(ctrl.Rule(lh['Low'] & dtt['Medium'] & tdt['High'], suit['Medium']))     # Rule 22
@@ -151,11 +151,11 @@ def fis_solve(rulebase, load, distance, total_travel):
 
     # create control system:
 
-    fis_ctrl = ctrl.ControlSystem(rulebase)
+    system = ctrl.ControlSystem(rulebase)
 
     # create an instance of the control system for simulation:
 
-    sim = ctrl.ControlSystemSimulation(fis_ctrl)
+    sim = ctrl.ControlSystemSimulation(system)
 
     # solve:
 
