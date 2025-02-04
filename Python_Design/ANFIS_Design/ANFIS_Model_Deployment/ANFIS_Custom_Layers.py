@@ -10,6 +10,7 @@ import tensorflow as tf
 from keras import constraints, Layer
 from itertools import product
 import matplotlib.pyplot as plt
+import numpy as np
 
 #################################### Define  Classes: ####################################
 
