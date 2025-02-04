@@ -8,8 +8,7 @@ It is meant to be imported when the ANFIS model is deployed.
 
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras import Input, Model, constraints
-from keras.layers import Layer
+from keras import Input, Model, constraints, Layer
 from itertools import product
 
 #################################### Define  Classes: ####################################
