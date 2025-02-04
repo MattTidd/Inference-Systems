@@ -7,9 +7,9 @@ It is meant to be imported when the ANFIS model is deployed.
 #################################### Import Packages: ####################################
 
 import tensorflow as tf
-from tensorflow import keras
-from keras import Input, Model, constraints, Layer
+from keras import constraints, Layer
 from itertools import product
+import matplotlib.pyplot as plt
 
 #################################### Define  Classes: ####################################
 
@@ -79,6 +79,80 @@ class MF_Layer(Layer):
             raise ValueError(f'Parameters provided are not of correct shape, expected ({self.num_inputs}, {self.num_mfs}, {self.num_antecedents})')
 
         self.mf_params = params
+
+    # plotting the membership functions:
+    def plot_membership(self, max_values):
+        # make sure that the provided number of max values matches the number of inputs:
+        if len(max_values) != self.num_inputs:
+            raise ValueError(f'Expected {self.num_inputs} max values, but got {len(max_values)} instead.')
+        
+        # set names:
+        mf_names = [f'MF {i + 1}' for i in range(self.num_mfs)]
+
+        # plot the membership functions:
+        # for every input:
+        for i in range(self.num_inputs):
+            input_mf_params = self.mf_params[i]
+            x_values = np.linspace(0, max_values[i], 1000)
+            plt.figure(figsize = (12, 8))
+
+            # for every membership function in that input:
+            for j in range(self.num_mfs):
+
+                # if gaussian:
+                if self.mf_type == 'Gaussian':
+                    # define the parameters:
+                    mean = input_mf_params[j, 0]  # mean of the gaussian
+                    std = input_mf_params[j, 1]   # standard deviation of the gaussian
+
+                    # compute output:
+                    y_values = [tf.exp(-0.5 * tf.square((x - mean) / (std + 1e-6))) for x in x_values]
+
+                # if smoothed triangular:
+                if self.mf_type == 'Smoothed Triangular':
+                    # define parameters
+                    a = input_mf_params[j, 0]   # a parameter
+                    b = input_mf_params[j, 1]   # b parameter
+                    c = input_mf_params[j, 2]   # c parameter
+
+                    # smoothing factor beta:
+                    beta = 5
+
+                    # check if we are on the edges:
+                    is_left_edge = tf.equal(a, b)
+                    is_right_edge = tf.equal(b, c)
+
+                    # compute softplus-based smoothed triangular membership function:
+                    left = tf.nn.softplus(beta * (x_values - a)) / (tf.nn.softplus(beta * (b - a)) + 1e-6)
+                    right = tf.nn.softplus(beta * (c - x_values)) / (tf.nn.softplus(beta * (c - b)) + 1e-6) 
+
+                    # deal with edge case:
+                    left = tf.where((x_values == a) & is_left_edge, 1.0, left)
+                    right = tf.where((x_values == c) & is_right_edge, 1.0, right)
+
+                    # compute output:
+                    y_values = tf.maximum(0.0, tf.minimum(left, right))
+
+                # if generalized bell:
+                if self.mf_type == 'Generalized Bell':
+                    # define parameters
+                    a = input_mf_params[j, 0]
+                    b = input_mf_params[j, 1]
+                    c = input_mf_params[j, 2]
+
+                    # clamp b:
+                    b = tf.clip_by_value(b, 1e-6, 5.0)
+
+                    # compute output:
+                    y_values = [1 / (1 + tf.abs((x - c) / (a + 1e-6)) ** (2 * b)) for x in x_values]
+
+                plt.plot(x_values, y_values, label = f'{mf_names[j]}')
+            plt.title(f'Membership Functions for Input X{i + 1}')
+            plt.xlabel('Input Value')
+            plt.ylabel('Degree of Membership')
+            plt.legend()
+            plt.grid(True)
+        plt.show()
 
     # function call:
     def call(self, inputs):
