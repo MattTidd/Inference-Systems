@@ -1,0 +1,20 @@
+{
+    "parameters": {
+        "mf_type": "Smoothed Triangular",
+        "num_mfs": 4,
+        "learning_rate": 0.0001,
+        "batch_size": 32,
+        "num_epochs": 500
+    },
+    "results": {
+        "loss": 0.10643891245126724,
+        "mae": 0.26380330324172974,
+        "r2_score": 0.9565558433532715,
+        "root_mean_squared_error": 0.32624977827072144,
+        "val_loss": 0.10348416864871979,
+        "val_mae": 0.25715669989585876,
+        "val_r2_score": 0.9580832123756409,
+        "val_root_mean_squared_error": 0.32168954610824585,
+        "train_time": 237.6452522277832
+    }
+}

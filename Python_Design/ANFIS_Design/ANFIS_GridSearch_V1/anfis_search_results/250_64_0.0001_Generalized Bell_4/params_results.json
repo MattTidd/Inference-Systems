@@ -1,0 +1,20 @@
+{
+    "parameters": {
+        "mf_type": "Generalized Bell",
+        "num_mfs": 4,
+        "learning_rate": 0.0001,
+        "batch_size": 64,
+        "num_epochs": 250
+    },
+    "results": {
+        "loss": 1.2276889085769653,
+        "mae": 1.0598891973495483,
+        "r2_score": 0.4989076852798462,
+        "root_mean_squared_error": 1.108011245727539,
+        "val_loss": 1.194372296333313,
+        "val_mae": 1.0456745624542236,
+        "val_r2_score": 0.5162128210067749,
+        "val_root_mean_squared_error": 1.092873454093933,
+        "train_time": 87.96699452400208
+    }
+}

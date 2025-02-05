@@ -1,0 +1,20 @@
+{
+    "parameters": {
+        "mf_type": "Gaussian",
+        "num_mfs": 4,
+        "learning_rate": 0.0005,
+        "batch_size": 128,
+        "num_epochs": 500
+    },
+    "results": {
+        "loss": 0.09799192100763321,
+        "mae": 0.25240254402160645,
+        "r2_score": 0.9600034952163696,
+        "root_mean_squared_error": 0.31303662061691284,
+        "val_loss": 0.09407700598239899,
+        "val_mae": 0.24417562782764435,
+        "val_r2_score": 0.9618935585021973,
+        "val_root_mean_squared_error": 0.30671975016593933,
+        "train_time": 295.7020366191864
+    }
+}
