@@ -19,7 +19,7 @@ import sys
 import random
 import math as m
 import heapq
-from PythonFISFunction2 import *
+from PythonFISFunctionV2 import *
 import pandas as pd
 import tkinter as tk
 
@@ -66,8 +66,7 @@ def read_map(map_str, resolution):
 
     # get cwd, list all directories and append to the file path of the maps
     current_dir = os.getcwd()
-    files_in_dir = os.listdir(current_dir)
-    file_path = os.path.join(current_dir, files_in_dir[files_in_dir.index('python_stuff')], "maps", str(map_str))
+    file_path = os.path.join(current_dir, "Python_Design", "FIS_Design", "maps", str(map_str))
 
     # check if that map exists, read image if it does
     if not os.path.isfile(file_path):
