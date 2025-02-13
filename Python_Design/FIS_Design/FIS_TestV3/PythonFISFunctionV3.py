@@ -125,7 +125,6 @@ def fis_create():
 
     return rulebase
 
-
 def fis_solve(rulebase, load, distance, total_travel):
 
     """
