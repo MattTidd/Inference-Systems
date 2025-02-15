@@ -65,7 +65,7 @@ suit_hi = fuzz.trimf(suit.universe, [65/12, 7.5, 115/12])
 suit_vhi = fuzz.trimf(suit.universe, [95/12, 10, 10])
 
 # Visualize these universes and membership functions
-fig1, (ax0, ax1, ax2) = plt.subplots(nrows=3, figsize=(6, 12))
+fig1, (ax0, ax1, ax2) = plt.subplots(nrows=3, figsize=(3.5, 10))
 
 
 # for load history:
@@ -76,7 +76,7 @@ ax0.set_title('Load History')
 ax0.minorticks_on()
 ax0.grid(which = 'major', color = 'black', linestyle = '--', linewidth = 0.5)
 ax0.grid(which = 'minor', color = 'gray', linestyle = ':', linewidth = 0.25)
-ax0.legend()
+# ax0.legend()
 
 # for distance to task:
 ax1.plot(dtt_range, dtt_lo, 'b', linewidth = 1.5, label = 'Low')
@@ -86,7 +86,7 @@ ax1.set_title('Distance to Task')
 ax1.minorticks_on()
 ax1.grid(which = 'major', color = 'black', linestyle = '--', linewidth = 0.5)
 ax1.grid(which = 'minor', color = 'gray', linestyle = ':', linewidth = 0.25)
-ax1.legend()
+# ax1.legend()
 
 # for total distance travelled:
 ax2.plot(tdt_range, tdt_lo, 'b', linewidth = 1.5, label = 'Low')
@@ -96,11 +96,11 @@ ax2.set_title('Total Distance Travelled')
 ax2.minorticks_on()
 ax2.grid(which = 'major', color = 'black', linestyle = '--', linewidth = 0.5)
 ax2.grid(which = 'minor', color = 'gray', linestyle = ':', linewidth = 0.25)
-ax2.legend()
+ax2.legend(loc = 'upper center', bbox_to_anchor=(0.5, -0.1), fancybox = True, ncol = 3)
 
 # for the output variable:
 
-fig = plt.figure(figsize = (10,6))
+fig = plt.figure(figsize = (3.5, 2.5))
 
 plt.plot(suit_range, suit_vl, 'c', linewidth = 1.5, label = 'Very Low')
 plt.plot(suit_range, suit_lo, 'b', linewidth = 1.5, label = 'Low')
@@ -111,7 +111,7 @@ plt.title('Suitability')
 plt.minorticks_on()
 plt.grid(which = 'major', color = 'black', linestyle = '--', linewidth = 0.5)
 plt.grid(which = 'minor', color = 'gray', linestyle = ':', linewidth = 0.25)
-plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox = True, ncol = 5)
+plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), fancybox = True, ncol = 3)
 
 fig1.savefig('input_membership.png', dpi = 300, bbox_inches = 'tight')
 plt.savefig("output_membership.png", dpi = 300, bbox_inches="tight")
